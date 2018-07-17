@@ -2,7 +2,7 @@
 import os
 import pandas as pd
 from rdkit import Chem
-from Modifications2 import random_on_target
+from Modifications2 import general_modify
 from Modifications2 import random_from_list
 from Modifications2 import weighted
 from shutil import copy

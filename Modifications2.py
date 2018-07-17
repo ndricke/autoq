@@ -61,8 +61,9 @@ def random_on_target(m,m_o2,cutoff,substruct=None):
 def general_modify(m, cutoff, substruct=None):
 
     mw=Chem.RWMol(m)
-    atom_list = []
-    atom_list.append(m)
+    atom_count = mw.GetNumAtoms()
+    print("Atom count: ", atom_count)
+    atom_list = range(cutoff, atom_count)
     print("Modif2 atom list: ", atom_list)
 
     new_m=random_from_list(mw, atom_list, substruct=substruct)    
