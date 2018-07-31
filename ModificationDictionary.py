@@ -17,7 +17,9 @@ from random import choice
 from collections import OrderedDict
 
 #a list of atomic numbers to be used when replacing H with another atom
-Z_list=[5,6,7,8,9,14,15,16,17,35,53]
+#Z_list=[5,6,7,8,9,14,15,16,17,35,53]
+Z_list=[6,7,8,9,17,35,53]
+Mod_list=['CN','OCH3','CH3','NH2','OH','F','Cl','Br','I']
 
 #a dictionary of functional groups to be used when modifying structures
 fg=OrderedDict()
@@ -381,21 +383,29 @@ substruct_dict={}
 # functions
 modif_dict={}
 
-substruct_dict['cH']=Chem.MolFromSmarts('[cX3H]')
+#substruct_dict['cH']=Chem.MolFromSmarts('[c;H1,C;H1]')
+#substruct_dict['cH']=Chem.MolFromSmarts('[c,C;H1]')
+substruct_dict['cH']=Chem.MolFromSmarts('[c;H1]')
 modif_dict[substruct_dict['cH']]=[]
-modif_dict[substruct_dict['cH']].append(HToOtherElement)
-modif_dict[substruct_dict['cH']].append(CHToN)
-modif_dict[substruct_dict['cH']].append(CHToNplus)
+#modif_dict[substruct_dict['cH']].append(HToOtherElement)
+modif_dict[substruct_dict['cH']].append(replace_substituent)
+#modif_dict[substruct_dict['cH']].append(CHToN)
 
-substruct_dict['n+H']=Chem.MolFromSmarts('[n+H]')
-modif_dict[substruct_dict['n+H']]=[]
-modif_dict[substruct_dict['n+H']].append(HToOtherElement)
-modif_dict[substruct_dict['n+H']].append(HToPh)
+#substruct_dict['cH']=Chem.MolFromSmarts('[cX3H]')
+#modif_dict[substruct_dict['cH']]=[]
+#modif_dict[substruct_dict['cH']].append(HToOtherElement)
+#modif_dict[substruct_dict['cH']].append(CHToN)
+#modif_dict[substruct_dict['cH']].append(CHToNplus)
 
-substruct_dict['n+Ph']=Chem.MolFromSmarts('[n+]-[cX3]1:[cX3H]:[cX3H]:[cX3H]:[cX3H]:[cX3H]1')
-modif_dict[substruct_dict['n+Ph']]=[]
-modif_dict[substruct_dict['n+Ph']].append(AddSubstToPh)
-
-substruct_dict['c']=Chem.MolFromSmarts('[c;R1;!$(c=O);!$(c=S)]')
-modif_dict[substruct_dict['c']]=[]
-modif_dict[substruct_dict['c']].append(replace_substituent)
+#substruct_dict['n+H']=Chem.MolFromSmarts('[n+H]')
+#modif_dict[substruct_dict['n+H']]=[]
+#modif_dict[substruct_dict['n+H']].append(HToOtherElement)
+#modif_dict[substruct_dict['n+H']].append(HToPh)
+#
+#substruct_dict['n+Ph']=Chem.MolFromSmarts('[n+]-[cX3]1:[cX3H]:[cX3H]:[cX3H]:[cX3H]:[cX3H]1')
+#modif_dict[substruct_dict['n+Ph']]=[]
+#modif_dict[substruct_dict['n+Ph']].append(AddSubstToPh)
+#
+#substruct_dict['c']=Chem.MolFromSmarts('[c;R1;!$(c=O);!$(c=S)]')
+#modif_dict[substruct_dict['c']]=[]
+#modif_dict[substruct_dict['c']].append(replace_substituent)

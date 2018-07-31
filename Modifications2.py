@@ -88,8 +88,10 @@ def random_from_list(m,at_list,substruct=None,similarity=0):
         
         #check if it has any of the substructures in the atom list
         no_match=True 
+        print(list(md.substruct_dict.keys()))
         for s in list(md.substruct_dict.keys()):
             s_mol=md.substruct_dict[s]
+            print(mw.GetSubstructMatches(s_mol))
             for match in mw.GetSubstructMatches(s_mol):
                 if match[0] in at_list:
                     no_match=False
