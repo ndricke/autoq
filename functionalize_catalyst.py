@@ -10,9 +10,9 @@ from molSimplify.Classes import mol3D, atom3D
 import numpy as np
 import math, random
 
-# def find_Hs(infile):
+# def find_Hs(infile): # currently unnecessary
 #     # infile: .mol or .xyz
-#     # returns list of indices for all Hs in molecule
+#     # returns list of indices for all Hs in molecule # might be off by one
 #     infile_type = infile.split('.')[-1]
 #     if not infile_type == ('mol' or 'xyz'):
 #         print("Couldn't read molecule from input file.")
@@ -28,11 +28,12 @@ import math, random
 #     return H_list
 
 def find_Hs(macrocycle): # string
-    """ this is a hard-coded list for the porphyrin in molSimplify's library,
-    for testing purposes; i'll go back later and figure out how to use any .mol
-    file from one's local library for the commented-out version of find_Hs() """
-    if macrocycle == "porphyrin":
-        return [9, 10, 17, 18, 24, 25, 30, 31, 33, 34, 35, 36] #one-indexed from their porphyrin.mol
+    # atom indices are one-indexed from .mol file
+    # add custom ligands to library first, with just the metal atom removed from the .mol or .xyz
+    if macrocycle == "porphyrin": # in molSimplify's library
+        return [9, 10, 17, 18, 24, 25, 30, 31, 33, 34, 35, 36]
+    elif macrocycle == "nan": # custom ligand (make sure these indices match the .mol you add)
+        return [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
     else:
         print("Not a valid ligand.")
         return None
@@ -73,16 +74,16 @@ def list_to_string(list): # no spaces
     rtn = rtn[:-1] + "]"
     return rtn
 
-def functionalize(macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules):
+def functionalize(macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules, tempdir):
     # func_library: SMILES strings or built-in ligands; modify as needed
     # generally there are issues reading in strings containing []()
     func_library = ["B", "C", "N", "O", "F", "P", "S", "Cl", "Br", "I",
-                    "cyanide", "NC", "nme3", "tricyanomethyl", "methylamine",
-                    "dicyanamide", "imine", "nitroso", "misc",
-                    "OC", "oxo", "carboxyl",
+                    "cyanide", "NC", "tricyanomethyl", "methylamine",
+                    "dicyanamide", "nitroso",
+                    "OC", "carboxyl",
                     "trifluoromethyl",
                     "thiocyanate",
-                    "benzene_pi", "pyridine", "phosphorine", "benzenethiol"]
+                    "benzene_pi", "benzenethiol"]
     for n in range(1, num_molecules + 1):
         file_name = macrocycle + core + "-functionalized" + str(n)
         num_funcs = 0
@@ -105,13 +106,16 @@ def collect_xyz_files(current_location, destination, delete_current_location):
             if file.split('.')[-1] == "xyz":
                 os.system("scp %s %s" %(os.path.join(subdir, file), destination))
     if delete_current_location:
+        os.system("ls -R %s" %current_location)
         os.system("rm -R %s" %current_location)
-        # it also leaves a CLIinput.inp behind
+        os.system("rm /home/kjchen/CLIinput.inp")
 
+def run(macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules):
+    tempdir, outdir = make_tempdir_outdir(macrocycle, core)
+    functionalize(macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules, tempdir)
+    print("Functionalized .xyz files placed in " + outdir + "/")
+    collect_xyz_files(tempdir, outdir, True)
+    return outdir
 
-macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules = "porphyrin", "Fe", find_Hs("porphyrin"), int(sys.argv[1]), int(sys.argv[2]) # testing
-tempdir, outdir = make_tempdir_outdir(macrocycle, core)
-
-functionalize(macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules)
-print("Functionalized .xyz files placed in " + outdir)
-collect_xyz_files(tempdir, outdir, True)
+if __name__ == "__main__":
+    run(sys.argv[1], sys.argv[2], find_Hs(sys.argv[1]), int(sys.argv[3]), int(sys.argv[4]))

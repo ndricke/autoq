@@ -22,28 +22,27 @@ def vec3_perp(vec): # janky orthogonal vector generator; 3D
     ihat = [1, 0, 0] # arbitrarily chosen
     return scale_vector(np.cross(vec, ihat), np.linalg.norm(vec)) # retains original magnitude
 
-indir = sys.argv[1].rstrip('/')
-
-for infile in os.listdir(indir):
+def run(infile): # changed from indir to infile to prevent segfaults
     infile_type = infile.split('.')[-1]
     if infile_type != "mol" and infile_type != "xyz":
-        continue
+        return None
     print(infile)
 
     mol3D_O2 = mol3D.mol3D()
-    mol3D_O2.OBMol = mol3D_O2.getOBMol(indir + '/' + infile, infile_type, ffclean = False)
+    mol3D_O2.OBMol = mol3D_O2.getOBMol(infile, infile_type, ffclean = False)
     mol3D_O2.convert2mol3D()
 
     if len(mol3D_O2.findMetal()) == 1:
         M_ind = mol3D_O2.findMetal()[0]
     else:
         print("%s contains %d metal atoms." %(infile, len(mol3D_O2.findMetal())))
-        continue
+        return None
 
     connection_list = mol3D_O2.getBondedAtomsSmart(M_ind, oct = False)
     #print(connection_list)
 
-    mol, enl = structgen.ffopt('MMFF94', mol3D_O2, connection_list, 1, [], False, [], 200, False)
+    #mol, enl = structgen.ffopt('MMFF94', mol3D_O2, connection_list, 1, [], False, [], 200, False)
+    # removed optimization to prevent segfaults-- perhaps not necessary anymore
 
     # manually bind O2 at an angle (M-O-O = 1.8 A, 120 deg, 1.3 A)
     try:
@@ -52,13 +51,13 @@ for infile in os.listdir(indir):
         v = np.cross(v1, v2)
     except:
         print("Error finding plane of catalyst.")
-        continue
+        return None
 
     v_O1 = scale_vector(v, 1.8)
     v_O2 = scale_vector(v, 1.8 + 1.3 * math.sin(math.pi / 6))
     v_perp = vec3_perp(scale_vector(v, 1.3 * math.cos(math.pi / 6)))
     if v_perp == None: # shouldn't happen
-        continue
+        return None
     M_coords = mol3D_O2.atoms[M_ind].coords()
 
     mol3D_O2.addAtom(mol3D.atom3D(Sym = 'O', xyz = [M_coords[c] + v_O1[c] for c in range(len(M_coords))]))
@@ -68,3 +67,6 @@ for infile in os.listdir(indir):
     # i think this ffopt always fails for some reason
 
     mol3D_O2.writexyz(infile.split('.')[0] + "O2")
+
+if __name__ == "__main__":
+    run(sys.argv[1])
