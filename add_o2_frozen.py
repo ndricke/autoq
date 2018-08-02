@@ -43,7 +43,7 @@ for infile in os.listdir(indir):
     connection_list = mol3D_O2.getBondedAtomsSmart(M_ind, oct = False)
     #print(connection_list)
 
-    mol, enl = structgen.ffopt('MMFF94', mol3D_O2, connection_list, 1, [], False, [], 200, False)
+    mol, enl = structgen.ffopt('UFF', mol3D_O2, connection_list, 1, [], False, [], 200, False)
 
     # manually bind O2 at an angle (M-O-O = 1.8 A, 120 deg, 1.3 A)
     try:

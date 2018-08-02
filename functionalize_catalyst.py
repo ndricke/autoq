@@ -48,12 +48,12 @@ def choose_items(list, num_items, no_repeats):
     return chosen
 
 def make_tempdir_outdir(macrocycle, core):
-    tempdir = "/home/kjchen/functionalizecatalysttempdir" # modify as needed
+    tempdir = "/home/nricke/work/autoq/Fe-macrocycle/temp" # modify as needed
     while os.path.exists(tempdir):
         tempdir += "0"
     os.makedirs(tempdir)
 
-    outdir = "/home/kjchen/%s%s_funcs" %(macrocycle, core) # modify as needed; molSimplify expands ~ to home directory
+    outdir = "/home/nricke/work/autoq/Fe-macrocycle/%s%s_funcs" %(macrocycle, core) # modify as needed; molSimplify expands ~ to home directory
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     else:
@@ -61,7 +61,7 @@ def make_tempdir_outdir(macrocycle, core):
         outdir += str(version)
         while os.path.exists(outdir):
             version += 1
-            outdir = "/home/kjchen/%s%s_funcs%d" %(macrocycle, core, version)
+            outdir = "/home/nricke/work/autoq/Fe-macrocycle/%s%s_funcs%d" %(macrocycle, core, version)
         os.makedirs(outdir)
 
     return tempdir, outdir
@@ -110,6 +110,7 @@ def collect_xyz_files(current_location, destination, delete_current_location):
 
 
 macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules = "porphyrin", "Fe", find_Hs("porphyrin"), int(sys.argv[1]), int(sys.argv[2]) # testing
+
 tempdir, outdir = make_tempdir_outdir(macrocycle, core)
 
 functionalize(macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules)
