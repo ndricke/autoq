@@ -1,5 +1,6 @@
 # contains functions for randomly functionalizing atom indices
-# ligand should be added to molSimplify library first
+# ligand should be added to molSimplify library first (remove metal atom if applicable)
+    # use the files on GitHub for non-porphyrin ligands
 # there are currently no checks to make sure that number of requested items
     # does not exceed max possible number of items, so be careful (probably fine)
 
@@ -10,30 +11,21 @@ from molSimplify.Classes import mol3D, atom3D
 import numpy as np
 import math, random
 
-# def find_Hs(infile): # currently unnecessary
-#     # infile: .mol or .xyz
-#     # returns list of indices for all Hs in molecule # might be off by one
-#     infile_type = infile.split('.')[-1]
-#     if not infile_type == ('mol' or 'xyz'):
-#         print("Couldn't read molecule from input file.")
-#         return None
-#     molecule = mol3D.mol3D()
-#     molecule.OBMol = molecule.getOBMol(infile, infile_type, ffclean = False)
-#     molecule.convert2mol3D()
-#
-#     H_list = []
-#     for i in range(len(molecule.atoms)):
-#         if atoms[i].symbol() == 'H':
-#             H_list.append(i)
-#     return H_list
+homedir = "/home/kjchen/" # modify as needed
+nonmetal_catalysts = ["mepyrid", "tetrids", "tetry"]
 
-def find_Hs(macrocycle): # string
-    # atom indices are one-indexed from .mol file
-    # add custom ligands to library first, with just the metal atom removed from the .mol or .xyz
-    if macrocycle == "porphyrin": # in molSimplify's library
+def find_Hs(catalyst): # returns list of functionalizable atom indices
+    # atom indices are one-indexed from .mol or .xyz file
+    if catalyst == "porphyrin":
         return [9, 10, 17, 18, 24, 25, 30, 31, 33, 34, 35, 36]
-    elif macrocycle == "nan": # custom ligand (make sure these indices match the .mol you add)
+    elif catalyst == "nan":
         return [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
+    elif catalyst == "mepyrid":
+        return [19, 24, 25]
+    elif catalyst == "tetrids":
+        return [30, 31, 32, 33, 34, 35, 36]
+    elif catalyst == "tetry":
+        return [29, 30, 31, 32, 33, 34, 35, 36]
     else:
         print("Not a valid ligand.")
         return None
@@ -48,13 +40,13 @@ def choose_items(list, num_items, no_repeats):
         chosen.append(list[index])
     return chosen
 
-def make_tempdir_outdir(macrocycle, core):
-    tempdir = "/home/nricke/work/autoq/Fe-macrocycle/temp" # modify as needed
+def make_tempdir_outdir(catalyst, core):
+    tempdir = homedir + "functionalizecatalysttempdir" # modify as needed
     while os.path.exists(tempdir):
         tempdir += "0"
     os.makedirs(tempdir)
 
-    outdir = "/home/nricke/work/autoq/Fe-macrocycle/%s%s_funcs" %(macrocycle, core) # modify as needed; molSimplify expands ~ to home directory
+    outdir = homedir + "%s%s_funcs" %(catalyst, core) # modify as needed; molSimplify expands ~ to home directory
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     else:
@@ -62,19 +54,21 @@ def make_tempdir_outdir(macrocycle, core):
         outdir += str(version)
         while os.path.exists(outdir):
             version += 1
-            outdir = "/home/nricke/work/autoq/Fe-macrocycle/%s%s_funcs%d" %(macrocycle, core, version)
+            outdir = homedir + "%s%s_funcs%d" %(catalyst, core, version)
         os.makedirs(outdir)
 
     return tempdir, outdir
 
-def list_to_string(list): # no spaces
+def list_to_string(list): # list should not be empty
+    if len(list) == 1:
+        return str(list[0])
     rtn = "["
     for item in list:
-        rtn += str(item) + ","
-    rtn = rtn[:-1] + "]"
+        rtn += str(item) + "," # no spaces
+    rtn = rtn.rstrip(",") + "]"
     return rtn
 
-def functionalize(macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules, tempdir):
+def functionalize(catalyst, core, possible_func_indices, expected_num_funcs, num_molecules, tempdir):
     # func_library: SMILES strings or built-in ligands; modify as needed
     # generally there are issues reading in strings containing []()
     func_library = ["B", "C", "N", "O", "F", "P", "S", "Cl", "Br", "I",
@@ -85,14 +79,16 @@ def functionalize(macrocycle, core, possible_func_indices, expected_num_funcs, n
                     "thiocyanate",
                     "benzene_pi", "benzenethiol"]
     for n in range(1, num_molecules + 1):
-        file_name = macrocycle + core + "-functionalized" + str(n)
+        file_name = catalyst + core + "-functionalized" + str(n)
+        if catalyst in nonmetal_catalysts:
+            file_name += "TEMPMETAL"
         num_funcs = 0
         while (num_funcs < 1 or num_funcs > len(possible_func_indices)):
             num_funcs = np.random.poisson(expected_num_funcs)
         func_list = choose_items(func_library, num_funcs, False)
         func_indices = choose_items(possible_func_indices, num_funcs, True)
 
-        ms_command = "molsimplify -core %s -oxstate 2 -coord 6 -geometry oct -spin 3 -lig %s -ligocc 1 -decoration %s -decoration_index %s -rundir %s -name %s" %(core, macrocycle, list_to_string(func_list), list_to_string(func_indices), tempdir, file_name)
+        ms_command = "molsimplify -core %s -oxstate 2 -coord 6 -geometry oct -spin 3 -lig %s -ligocc 1 -decoration %s -decoration_index %s -rundir %s -name %s" %(core, catalyst, list_to_string(func_list), list_to_string(func_indices), tempdir, file_name)
         print(ms_command)
         os.system(ms_command)
 
@@ -108,24 +104,35 @@ def collect_xyz_files(current_location, destination, delete_current_location):
     if delete_current_location:
         os.system("ls -R %s" %current_location)
         os.system("rm -R %s" %current_location)
-        os.system("rm /home/kjchen/CLIinput.inp")
+        os.system("rm %sCLIinput.inp" %homedir)
+        # CLIinput.inp actually gets saved to current working directory
 
-def run(macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules):
-    tempdir, outdir = make_tempdir_outdir(macrocycle, core)
-    functionalize(macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules, tempdir)
+def remove_TEMPMETAL(dir):
+    dir = dir.rstrip("/")
+    for file in os.listdir(dir):
+        if file.split('.')[-1] != "xyz" or "TEMPMETAL" not in file:
+            continue
+        molecule = mol3D.mol3D()
+        molecule.OBMol = molecule.getOBMol(dir + "/" + file, "xyz", ffclean = False)
+        molecule.convert2mol3D()
+        for i in molecule.findMetal(): # len(molecule.findMetal()) should initially be 1
+            molecule.deleteatom(i)
+        structgen.ffopt('MMFF94', molecule, [], 1, [], False, [], 200, False)
+        molecule.writexyz(dir + "/" + file[:file.index("TEMPMETAL")])
+    for file in os.listdir(dir):
+        if "TEMPMETAL" in file:
+            os.system("rm %s/%s" %(dir, file))
+
+def run(catalyst, core, possible_func_indices, expected_num_funcs, num_molecules):
+    if catalyst in nonmetal_catalysts:
+        core = ""
+        # for naming purposes (molSimplify will default to Fe, but it doesn't matter after remove_TEMPMETAL())
+    tempdir, outdir = make_tempdir_outdir(catalyst, core)
+    functionalize(catalyst, core, possible_func_indices, expected_num_funcs, num_molecules, tempdir)
     print("Functionalized .xyz files placed in " + outdir + "/")
     collect_xyz_files(tempdir, outdir, True)
+    remove_TEMPMETAL(outdir)
     return outdir
 
-<<<<<<< HEAD
-macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules = "porphyrin", "Fe", find_Hs("porphyrin"), int(sys.argv[1]), int(sys.argv[2]) # testing
-
-tempdir, outdir = make_tempdir_outdir(macrocycle, core)
-
-functionalize(macrocycle, core, possible_func_indices, expected_num_funcs, num_molecules)
-print("Functionalized .xyz files placed in " + outdir)
-collect_xyz_files(tempdir, outdir, True)
-=======
 if __name__ == "__main__":
     run(sys.argv[1], sys.argv[2], find_Hs(sys.argv[1]), int(sys.argv[3]), int(sys.argv[4]))
->>>>>>> af89f49e46dd89ac93c66dae3e8b6f15afa95cc8
