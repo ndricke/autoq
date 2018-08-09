@@ -117,7 +117,11 @@ def remove_TEMPMETAL(dir):
         molecule.convert2mol3D()
         for i in molecule.findMetal(): # len(molecule.findMetal()) should initially be 1
             molecule.deleteatom(i)
-        structgen.ffopt('MMFF94', molecule, [], 1, [], False, [], 200, False)
+
+        structgen.ffopt('UFF', molecule, [], 1, [], False, [], 200, False)
+        # MMFF94/ffopt() in general can cause segfaults
+        # you should still check the structures in Avogadro and optimize manually if necessary
+
         molecule.writexyz(dir + "/" + file[:file.index("TEMPMETAL")])
     for file in os.listdir(dir):
         if "TEMPMETAL" in file:
