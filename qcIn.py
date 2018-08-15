@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
 import pyQChem as qc
+import numpy as np
 import sys
 import os
 import copy
@@ -122,24 +123,46 @@ class QcIn(object):
         self.job_arr_list.append(self.sol_arr)
         self.job_arr_list.append(self.vdw_arr)
 
+    @staticmethod
+    def splitCoord(coord_list):
+        coords = np.zeros((len(coord_list),3))
+        atom_list = []
+        for i, item in enumerate(coord_list):
+            atom_list.append(item[0])
+            coords[i,:] = [float(c) for c in item[1:]]
+        return atom_list, coords
+
+    def O2coord(self):
+        atom_list, atom_coord = self.splitCoord(self.out.list_of_atoms)
+        O_indices = [i for i, x in enumerate(atom_list) if x[0] == 'O']
+        print(O_indices)
+        if len(O_indices) >= 2:
+            for index1 in range(len(O_indices)-1):
+                for index2 in range(index1+1, len(O_indices)):
+                    if np.linalg.norm(atom_coord[index1,:] - atom_coord[index2,:]) < 1.6:
+                        return O_indices[index1], O_indices[index2]
+        else: return None
+
 #CDFT calculation
     def jobCdft(self):
         self.rem.add('CDFT', 'True')
         self.rem.add('SCF_PRINT', 'True')
         self.cdft_arr = qc._unsupported_array("cdft")
         self.cdft_arr.add_line("1")
-        self.cdft_arr.add_line("1  1  2  s")
+        O2_indices = self.O2coord()
+        print(O2_indices)
+        self.cdft_arr.add_line("1  %s  %s  s" % (O2_indices[0]+1, O2_indices[1]+1))
         self.job_arr_list.append(self.cdft_arr)
 
         atoms = copy.copy(self.out.list_of_atoms)
         first_two = [atoms[0][0], atoms[1][0]]
         last_two = [atoms[-2][0], atoms[-1][0]]
-        if first_two != ['O','O'] and last_two == ['O','O']:
-            atoms.insert(0, atoms.pop()); atoms.insert(0, atoms.pop())
-        xyz = qc.cartesian(atom_list=atoms)
-        self.mol = qc.mol_array(xyz)
-        self.mol.charge(self.charge)
-        self.mol.multiplicity(self.mult)
+        #if first_two != ['O','O'] and last_two == ['O','O']:
+        #    atoms.insert(0, atoms.pop()); atoms.insert(0, atoms.pop())
+        #xyz = qc.cartesian(atom_list=atoms)
+        #self.mol = qc.mol_array(xyz)
+        #self.mol.charge(self.charge)
+        #self.mol.multiplicity(self.mult)
 
 #Fix all but selected atom numbers
     def jobConstrainedOpt(self):
