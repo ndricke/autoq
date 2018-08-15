@@ -7,14 +7,14 @@ from qcIn import QcIn
 
 
 """
-This is supposed to make it easy to build consecutive jobs 
+This is supposed to make it easy to build consecutive jobs
 To do that, we want some flexibility about the types of jobs that can be run consecutively
-*assuming charge, mult, 
+*assuming charge, mult,
 """
 
 class QcMultIn(object):
 
-    def __init__(self, infile, charge, mult, joblist, method='tpssh', nametrunc=True):
+    def __init__(self, infile, charge, mult, joblist, method='tpssh', nametrunc=True, basis='6-31+g*'):
         self.charge_tran = {'a2':'-2','a1':'-1','a0':'0','c1':'1','c2':'2','c3':'3','c4':'4'}
         revd=dict([reversed(i) for i in self.charge_tran.items()])
         self.charge_tran.update(revd)
@@ -37,18 +37,19 @@ class QcMultIn(object):
         self.jobconcat = ''.join(joblist)
         self.job = qc.multifile()
         self.nametrunc = nametrunc
+        self.basis = basis
 
     def assembleMulti(self):
-        qcw = QcIn(self.infile,self.charge,self.mult, self.joblist.pop(0), method=self.method, nametrunc=self.nametrunc)
+        qcw = QcIn(self.infile,self.charge,self.mult, self.joblist.pop(0), method=self.method, nametrunc=self.nametrunc, basis=self.basis)
         self.job.add(qcw.assembleJob())
         for jobitem in self.joblist:
-            qcw = QcIn(self.infile,self.charge,self.mult, jobitem, method=self.method, geom_read=True, nametrunc=self.nametrunc)
+            qcw = QcIn(self.infile,self.charge,self.mult, jobitem, method=self.method, geom_read=True, nametrunc=self.nametrunc, basis=self.basis)
             self.job.add(qcw.assembleJob())
-        
+
     def writeMulti(self):
         self.assembleMulti()
-        #qc_infile = self.genName() 
-        qc_infile = self.path + self.genName() 
+        #qc_infile = self.genName()
+        qc_infile = self.path + self.genName()
         self.job.write(qc_infile)
 
     #standardized Q-Chem job naming scheme for multi-jobs
@@ -80,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument('-f', help='Q-Chem Output File or Parent Directory', type=str)
     parser.add_argument('-j', help='Job Type', type=str,default='optsp')
     parser.add_argument('-c', help='Charge', type=str,default='0')
-    parser.add_argument('-m', help='Multiplicity', type=str,default='1') 
+    parser.add_argument('-m', help='Multiplicity', type=str,default='1')
     parser.add_argument('-basis', help='Basis Set', type=str,default='6-31+g*')
     parser.add_argument('-method', help='EST Method', type=str,default='b3lyp')
     parser.add_argument('-nameparse', help='EST Method', type=bool,default=False)
@@ -95,7 +96,7 @@ if __name__ == "__main__":
     if os.path.isfile(f):
         if args.nameparse:
             c,m = chmultName(f)
-        qcw = QcMultIn(f,c,m, job, method=args.method, nametrunc=args.nametrunc)
+        qcw = QcMultIn(f,c,m, job, method=args.method, nametrunc=args.nametrunc, basis=args.basis)
         qcw.writeMulti()
 
     elif os.path.isdir(f):
@@ -104,19 +105,5 @@ if __name__ == "__main__":
             if qcoutfile.split('.')[-1] == 'xyz':
                 if args.nameparse:
                     c,m = chmultName(qcoutfile)
-                qcw = QcMultIn(f+'/'+qcoutfile, c, m, copy.copy(job), method=args.method, nametrunc=args.nametrunc)
+                qcw = QcMultIn(f+'/'+qcoutfile, c, m, copy.copy(job), method=args.method, nametrunc=args.nametrunc, basis=args.basis)
                 qcw.writeMulti()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
