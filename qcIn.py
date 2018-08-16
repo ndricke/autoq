@@ -55,7 +55,7 @@ class QcIn(object):
         self.out = qc.read(infile)
         self.rem = qc.rem_array()
         self.rem.basis(basis)
-        self.rem.method(method) 
+        self.rem.method(method)
         self.rem.thresh("14")
         self.rem.add('mem_total','4096')
         self.rem.add('mem_static','256')
@@ -135,13 +135,14 @@ class QcIn(object):
     def O2coord(self):
         atom_list, atom_coord = self.splitCoord(self.out.list_of_atoms)
         O_indices = [i for i, x in enumerate(atom_list) if x[0] == 'O']
-        print(O_indices)
         if len(O_indices) >= 2:
             for index1 in range(len(O_indices)-1):
                 for index2 in range(index1+1, len(O_indices)):
-                    if np.linalg.norm(atom_coord[index1,:] - atom_coord[index2,:]) < 1.6:
+                    if abs(np.linalg.norm(atom_coord[O_indices[index1],:] - atom_coord[O_indices[index2],:])) < 1.6:
                         return O_indices[index1], O_indices[index2]
-        else: return None
+        else:
+            print("Couldn't find the O2.")
+            return None
 
 #CDFT calculation
     def jobCdft(self):
@@ -150,8 +151,9 @@ class QcIn(object):
         self.cdft_arr = qc._unsupported_array("cdft")
         self.cdft_arr.add_line("1")
         O2_indices = self.O2coord()
-        print(O2_indices)
+        #print("O2 indices:", O2_indices)
         self.cdft_arr.add_line("1  %s  %s  s" % (O2_indices[0]+1, O2_indices[1]+1))
+        # error if O2coord() returns None
         self.job_arr_list.append(self.cdft_arr)
 
         atoms = copy.copy(self.out.list_of_atoms)
@@ -200,7 +202,7 @@ class QcIn(object):
         self.job_arr_list.append(self.plot_arr)
 
     #Single point job
-    def jobSp(self): 
+    def jobSp(self):
         self.rem.jobtype("sp")
         self.rem.add("print_orbitals","true")
         self.rem.add("chelpg", "true")
@@ -213,7 +215,7 @@ class QcIn(object):
         self.addSolvent()
 
     #Geometry Optimization Job
-    def jobOpt(self): 
+    def jobOpt(self):
         self.rem.jobtype("opt")
 #        self.rem.add("geom_opt_tol_gradient", "5")
 #        self.rem.add("geom_opt_tol_displacement", "10")
@@ -224,10 +226,10 @@ class QcIn(object):
         self.addSolvent()
 
     #Frequency Job
-    def jobFreq(self): 
+    def jobFreq(self):
         self.rem.jobtype("freq")
         self.rem.add("cpscf_nseg", "4")
-    
+
     #standardized Q-Chem job naming scheme
     def genName(self):
         chmult = charge_tran[self.charge]+'m'+self.mult
@@ -256,7 +258,7 @@ class QcIn(object):
         job = self.assembleJob()
         print("QC infile: ", qc_infile)
         if qc_infile == None:
-            qc_infile = self.genName() 
+            qc_infile = self.genName()
         job.write(qc_infile)
 
 def WriteJob(infile, args, indir='.'):
@@ -284,7 +286,7 @@ if __name__ == "__main__":
     parser.add_argument('-f', help='Q-Chem Output File or Parent Directory', type=str)
     parser.add_argument('-j', help='Job Type', type=str,default='sp')
     parser.add_argument('-c', help='Charge', type=str,default='0')
-    parser.add_argument('-m', help='Multiplicity', type=str,default='1') 
+    parser.add_argument('-m', help='Multiplicity', type=str,default='1')
     parser.add_argument('-basis', help='Basis Set', type=str,default='6-31+g*')
     parser.add_argument('-method', help='EST Method', type=str,default='tpssh')
     parser.add_argument('-name', help='Truncate name at first _', type=int,default=1)
@@ -300,7 +302,7 @@ if __name__ == "__main__":
 #            read_c, read_m = QcIn.ReadChMult(aNmN)
 #        qcw = QcIn(f,args.c,args.m,args.j,basis=args.basis,method=args.method,nametrunc=args.name)
 #        qcw.writeQcIn()
-        
+
     elif os.path.isdir(f):
         print("Directory found")
         for qcoutfile in os.listdir(f):
@@ -316,25 +318,3 @@ if __name__ == "__main__":
 #                    qcw = QcIn(f+'/'+qcoutfile,args.c,args.m,args.j,basis=args.basis,method=args.method, \
 #                               nametrunc=args.name)
 #                qcw.writeQcIn()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

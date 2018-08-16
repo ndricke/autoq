@@ -71,7 +71,7 @@ def list_to_string(list): # list should not be empty
 def functionalize(catalyst, core, possible_func_indices, expected_num_funcs, num_molecules, tempdir):
     # func_library: SMILES strings or built-in ligands; modify as needed
     # generally there are issues reading in strings containing []()
-    func_library = ["B", "C", "N", "O", "F", "P", "S", "Cl", "Br", "I",
+    func_library = ["B", "C", "N", "O", "F", "P", "S", "Cl", "Br", # basis set doesn't include I
                     "cyanide", "NC", "tricyanomethyl", "methylamine",
                     "dicyanamide", "nitroso",
                     "OC", "carboxyl",
