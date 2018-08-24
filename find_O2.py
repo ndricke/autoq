@@ -15,7 +15,7 @@ import pickle
 
 # used to create DataFrame
 filenames, oxy1_list, oxy2_list, cat_list, energy_list = [], [], [], [], []
-M_O2_bond_lengths, oxy1_chelpgs, oxy2_chelpgs, total_oxy_chelpgs = [], [], [], []
+cat_O2_bond_lengths, oxy1_chelpgs, oxy2_chelpgs, total_oxy_chelpgs = [], [], [], []
 cat_elements, cat_chelpgs = [], []
 
 def original_index(O_index, atom_coords):
@@ -36,8 +36,23 @@ def distance(string1, string2):
     difference = get_coords(string1) - get_coords(string2)
     return abs(np.linalg.norm(difference))
 
+def getKey(qdata):
+    return qdata.filename
+
+def order_loaded_pickle(inlist): # inlist should contain Qdatas
+    # returns list entries, alphabetized by file name (starting from the last letter and going backwards)
+    # for nonmetal catalysts, this will group spreadsheet lines by active site rather than functionalization
+    # if you change my nonmetal O2-binding naming conventions, this might stop working
+    inlist_ordered = inlist # inlist_ordered is returned; inlist is not modified
+    for item in inlist_ordered:
+        item.filename = item.filename[::-1]
+    inlist_ordered = sorted(inlist_ordered, key = getKey)
+    for item in inlist_ordered:
+        item.filename = item.filename[::-1]
+    return inlist_ordered
+
 def create_df(in_pickle):
-    save_data = pickle.load(open(in_pickle, "rb"))
+    save_data = order_loaded_pickle(pickle.load(open(in_pickle, "rb")))
     for qdata in save_data:
         try:
             atom_coords = qdata.listCoord()
@@ -69,7 +84,7 @@ def create_df(in_pickle):
             oxy1_chelpgs.append(None)
             oxy2_chelpgs.append(None)
             total_oxy_chelpgs.append(None)
-            M_O2_bond_lengths.append(None)
+            cat_O2_bond_lengths.append(None)
             cat_list.append(None)
             cat_elements.append(None)
             cat_chelpgs.append(None)
@@ -91,7 +106,7 @@ def create_df(in_pickle):
             oxy1_chelpgs.append(None)
             oxy2_chelpgs.append(None)
             total_oxy_chelpgs.append(None)
-            M_O2_bond_lengths.append(None)
+            cat_O2_bond_lengths.append(None)
             cat_list.append(None)
             cat_elements.append(None)
             cat_chelpgs.append(None)
@@ -103,7 +118,7 @@ def create_df(in_pickle):
             oxy1_chelpgs.append(None)
             oxy2_chelpgs.append(None)
             total_oxy_chelpgs.append(None)
-            M_O2_bond_lengths.append(None)
+            cat_O2_bond_lengths.append(None)
             cat_list.append(None)
             cat_elements.append(None)
             cat_chelpgs.append(None)
@@ -153,7 +168,7 @@ def create_df(in_pickle):
                 except:
                     total_oxy_chelpg = None
                 total_oxy_chelpgs[-1] = total_oxy_chelpg
-        M_O2_bond_lengths.append(shortest_dist)
+        cat_O2_bond_lengths.append(shortest_dist)
         cat_list.append(catalyst_index + 1)
         cat_elements.append(atom_coords[catalyst_index].split(' ')[0])
         cat_chelpgs.append(chelpgs[catalyst_index])
@@ -162,7 +177,7 @@ def create_df(in_pickle):
                                      ('Active_Site_ID', cat_elements), ('Oxygen_1', oxy1_list), ('Oxygen_2', oxy2_list),
                                      ('Active_Site_CHELPG', cat_chelpgs), ('Oxygen_1_CHELPG', oxy1_chelpgs), ('Oxygen_2_CHELPG', oxy2_chelpgs),
                                      #('O2_CHELPG', total_oxy_chelpgs), # has rounding errors so do this manually on spreadsheet instead
-                                     ('M-O2_Bond_Length', M_O2_bond_lengths)])
+                                     ('Cat-O2_Bond_Length', cat_O2_bond_lengths)])
 
     print(O2_df)
     name = in_pickle.split('.')[0].split('/')[-1] # input pickle file name
