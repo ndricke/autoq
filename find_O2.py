@@ -99,20 +99,8 @@ def create_df(in_pickle):
                     else:
                         O2_found = True
                         oxy1, oxy2 = index1, index2 # O_coords index values for oxygens identified as O2
-        if not O2_found:
+        if not O2_found or multiple_O2:
             #print("No O2 detected in " + qdata.filename)
-            oxy1_list.append(None)
-            oxy2_list.append(None)
-            oxy1_chelpgs.append(None)
-            oxy2_chelpgs.append(None)
-            total_oxy_chelpgs.append(None)
-            cat_O2_bond_lengths.append(None)
-            cat_list.append(None)
-            cat_elements.append(None)
-            cat_chelpgs.append(None)
-            continue
-        if multiple_O2:
-            #print("Multiple O2 detected in " + qdata.filename)
             oxy1_list.append(None)
             oxy2_list.append(None)
             oxy1_chelpgs.append(None)
@@ -173,13 +161,13 @@ def create_df(in_pickle):
         cat_elements.append(atom_coords[catalyst_index].split(' ')[0])
         cat_chelpgs.append(chelpgs[catalyst_index])
 
-    O2_df = pd.DataFrame.from_items([('File_Name', filenames), ('Energy', energy_list), ('Active_Site', cat_list),
+    O2_df = pd.DataFrame.from_items([('CatalystO2_File_Name', filenames), ('CatalystO2_Energy', energy_list), ('Active_Site', cat_list),
                                      ('Active_Site_ID', cat_elements), ('Oxygen_1', oxy1_list), ('Oxygen_2', oxy2_list),
                                      ('Active_Site_CHELPG', cat_chelpgs), ('Oxygen_1_CHELPG', oxy1_chelpgs), ('Oxygen_2_CHELPG', oxy2_chelpgs),
                                      #('O2_CHELPG', total_oxy_chelpgs), # has rounding errors so do this manually on spreadsheet instead
                                      ('Cat-O2_Bond_Length', cat_O2_bond_lengths)])
 
-    print(O2_df)
+#    print(O2_df)
     name = in_pickle.split('.')[0].split('/')[-1] # input pickle file name
     O2_df.to_csv(name + '.csv')
     O2_df.to_pickle(name + '_df.p')

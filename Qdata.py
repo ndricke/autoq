@@ -65,6 +65,7 @@ class Qdata(object):
             print("Function parse routine complete. Removing key: "+trash_key)
 
   def readFile(self, filename):
+    self.filename = filename.split('/')[-1]
     spl_filename = filename.split('.')
     self.ftype = spl_filename[-1]
     if self.ftype == 'xyz': #Just get the coordinates from the xyz file
