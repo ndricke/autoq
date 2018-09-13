@@ -33,7 +33,7 @@ def run(infile): # optcdftsp.out
                 mol_flag = True
 
     # generate cdftsp.in # change qcMultIn.py path if necessary
-    os.system("python ~/bin/qcMultIn.py -f %s -c %d -m %d -method %s -basis %s -j cdftsp" %(xyz_fn, charge, multiplicity, method, basis))
+    os.system("python qcMultIn.py -f %s -c %d -m %d -method %s -basis %s -j cdftsp" %(xyz_fn, charge, multiplicity, method, basis))
 
 if __name__ == "__main__":
     input = sys.argv[1].rstrip('/')
