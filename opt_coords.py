@@ -13,27 +13,29 @@ def run(infile): # optcdftsp.out
 
     # write optimized coordinates to a new .xyz with the same file name
     xyz_fn = infile.split('.')[0] + ".xyz"
-    CD.optCoordGrab(infile, xyz_fn)
+    xyz = CD.ConvergedCoordGrab(infile)
+    if xyz != []:
+        CD.WriteXYZ(xyz_fn, xyz)
 
-    # parse charge, mult, method, basis from infile
-    mol_flag = False
-    with open(infile, 'r') as f:
-        for line in f:
-            if "METHOD" in line:
-                method = line[6:].strip()
-            elif "BASIS" in line:
-                basis = line[5:].strip()
-            elif mol_flag:
-                mol_flag = False
-                try:
-                    charge, multiplicity = int(line.split(' ')[0]), int(line.split(' ')[-1])
-                except:
-                    continue
-            elif "$molecule" in line:
-                mol_flag = True
+#    # parse charge, mult, method, basis from infile
+#    mol_flag = False
+#    with open(infile, 'r') as f:
+#        for line in f:
+#            if "METHOD" in line:
+#                method = line[6:].strip()
+#            elif "BASIS" in line:
+#                basis = line[5:].strip()
+#            elif mol_flag:
+#                mol_flag = False
+#                try:
+#                    charge, multiplicity = int(line.split(' ')[0]), int(line.split(' ')[-1])
+#                except:
+#                    continue
+#            elif "$molecule" in line:
+#                mol_flag = True
 
     # generate cdftsp.in # change qcMultIn.py path if necessary
-    os.system("python qcMultIn.py -f %s -c %d -m %d -method %s -basis %s -j cdftsp" %(xyz_fn, charge, multiplicity, method, basis))
+    #os.system("python qcMultIn.py -f %s -c %d -m %d -method %s -basis %s -j cdftsp" %(xyz_fn, charge, multiplicity, method, basis))
 
 if __name__ == "__main__":
     input = sys.argv[1].rstrip('/')

@@ -105,6 +105,17 @@ def coordGrab(in_file):
   i += 1
  return coord
 
+def ConvergedCoordGrab(infile):
+    key_start = "OPTIMIZATION CONVERGED"
+    key_end = "Z-matrix Print"
+    raw_coord = sectionGrab(key_start, key_end, infile, start_cut=5, end_cut=1)
+    xyz_list = []
+    for i, line in enumerate(raw_coord):
+        spline = line.split()
+        xyz_list.append(spline[1:])
+    return xyz_list
+
+
 def optCoordGrab(in_file,out_file=None):
   key_start = "Standard Nuclear Orientation (Angstroms)"
   key_end = "Nuclear Repulsion Energy"
@@ -139,6 +150,14 @@ def optCoordGrab(in_file,out_file=None):
   for item in grab_list_cleaned:
     xyz.append(' '.join(item.split()[1:]))
   return xyz
+
+def WriteXYZ(xyz_filename, xyz):
+    #np.savetxt(xyz_filename, xyz, fmt='%10f', delimiter='  ', header=str(xyz.shape[0])+'\n', comments='')
+    with open(xyz_filename, 'w') as f_out:
+        f_out.write(str(len(xyz)) + '\n\n')
+        for item in xyz:
+            f_out.write('%s\n' %' '.join(item))
+    
 
 #under development
 def freqParse(in_file,in_dir):
