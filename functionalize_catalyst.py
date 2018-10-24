@@ -17,9 +17,11 @@ nonmetal_catalysts = ["mepyrid", "tetrids", "tetry"]
 def find_Hs(catalyst): # returns list of functionalizable atom indices
     # atom indices are one-indexed from .mol or .xyz file
     if catalyst == "porphyrin":
-        return [9, 10, 17, 18, 24, 25, 30, 31, 33, 34, 35, 36]
+        return [9, 18, 25, 30, 34, 36] # every other H to reduce steric issues
+        #return [9, 10, 17, 18, 24, 25, 30, 31, 33, 34, 35, 36]
     elif catalyst == "nan":
-        return [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
+        return [32, 33, 36, 37, 39, 42] # sterics
+        #return [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
     elif catalyst == "mepyrid":
         return [19, 24, 25]
     elif catalyst == "tetrids":
@@ -71,13 +73,15 @@ def list_to_string(list): # list should not be empty
 def functionalize(catalyst, core, possible_func_indices, expected_num_funcs, num_molecules, tempdir):
     # func_library: SMILES strings or built-in ligands; modify as needed
     # generally there are issues reading in strings containing []()
-    func_library = ["B", "C", "N", "O", "F", "P", "S", "Cl", "Br", # basis set doesn't include I
-                    "cyanide", "NC", "tricyanomethyl", "methylamine",
+    func_library = ["C", "N", "O", "F", "Cl", "Br", # basis set doesn't include I; B, P, S cause issues
+                    "cyanide",# "NC", "tricyanomethyl",
+                    "methylamine",
                     "dicyanamide", "nitroso",
                     "OC", "carboxyl",
                     "trifluoromethyl",
-                    "thiocyanate",
-                    "benzene_pi", "benzenethiol"]
+                    #"thiocyanate",
+                    #"benzene_pi", "benzenethiol"]
+                    "C=O"]
     for n in range(1, num_molecules + 1):
         file_name = catalyst + core + "-functionalized" + str(n)
         if catalyst in nonmetal_catalysts:
