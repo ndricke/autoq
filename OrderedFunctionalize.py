@@ -55,6 +55,7 @@ class FuncCatalyst(object):
 
     ## Functionalizes a catalyst with all possible combinations of a set of functional groups for a limited site count
     def run(self, func_num=1, func_indices=None, func_library=None):
+        print(func_indices)
         if func_library == None:
             func_library = self.func_library
         if func_indices == None:
@@ -67,15 +68,16 @@ class FuncCatalyst(object):
         # print(func_group_list)
 
         func_file_list = []
+        print(func_indices)
         for func_index_set in func_index_list:
             for func_group_set in func_group_list:
 
-                func_molecule = self.functionalize(func_index_set, func_group_set)
+                #func_molecule = self.functionalize(func_index_set, func_group_set)
                 file_name = self.catalyst + "_func" + str(self.n)
                 ## I modified my own custom version of molSimplify to do this, but it's not crucial for the moment
                 ## Instead I'm going to just print the list of functionalizations to a file
                 #func_molecule.writexyz(file_name, comment = ' '.join([self.catalyst,str(func_index_set),str(func_group_set)]))
-                func_molecule.writexyz(file_name) 
+                #func_molecule.writexyz(file_name) 
                 comment = ' '.join([str(self.n), self.catalyst,str(func_index_set),str(func_group_set),'\n'])
                 func_file_list.append(comment)
                 self.n += 1
@@ -105,4 +107,5 @@ if __name__ == "__main__":
                     "OC", "C=O",
                     "trifluoromethyl"]
     func = FuncCatalyst(args.cat)
+    print(H_index)
     func.run(func_num=args.fn, func_indices = H_index, func_library=func_list)

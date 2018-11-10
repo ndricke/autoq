@@ -18,7 +18,7 @@ vibH_key ='Vibrational Enthalpy:'
 #PCM job keys
 gelec_key ='G_electrostatic'
 solG_key ='Total Free Energy (H0 + V/2 + non-elec)'
-solEtot_key ='Total energy in the final basis set'
+totalEnergy_key ='Total energy in the final basis set'
 job_key = 'jobtype'
 chmul_key = '$molecule'
 Mulliken_key = 'Ground-State Mulliken Net Atomic Charges'
@@ -30,6 +30,8 @@ orbital_key = "Orbital Energies (a.u.)"
 class Qdata(object):
   def __init__(self):
     self.chelpg_flag = False
+    self.energy_list = []
+    self.E = None
     #There was a point where I didn't include all of these, but hey, why not? It runs fast enough
     self.parse_base = {finish_key:self.isComplete, \
                        chmul_key:self.chargeMult, \
@@ -45,6 +47,7 @@ class Qdata(object):
                        Mulliken_key : self.Mulliken, \
                        Chelpg_key : self.Chelpg, \
                        optgeo_key : self.optCoordGrab, \
+                       totalEnergy_key : self.totalEnergy, \
                        #orbital_key : self.orbitals, \ #Currently breaks parsing for all things after the orbitals
                        }
 
@@ -127,6 +130,10 @@ class Qdata(object):
   def spEnergy(self, infile, line):
     spline = line.split()
     self.E = float(spline[-1])
+
+  def totalEnergy(self, infile, line):
+    spline = line.split()
+    self.energy_list.append(float(spline[-1]))
 
   def solvEnergy(self,infile,line):
     spline = line.split()
@@ -233,10 +240,10 @@ if __name__ == "__main__":
 #  print(Fe_charge)
 #  print(qdata.spin)  
 
-  print(qdata.opt_coord)
-  qdata.writeXYZ('test.xyz', qdata.opt_atoms, qdata.opt_coord)
+#  print(qdata.opt_coord)
+#  qdata.writeXYZ('test.xyz', qdata.opt_atoms, qdata.opt_coord)
 
-
+  print(qdata.energy_list)
 
 
 

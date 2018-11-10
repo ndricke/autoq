@@ -11,7 +11,7 @@ def read_data(qchem_file): # does not check whether qchem_file is a .out
     qdata.readFile(qchem_file)
     return qdata
 
-def pickle_data(in_filedir, pickle_fname):
+def collect_qdata(in_filedir):
     save_data = []
     for subdir, dirs, files in os.walk(in_filedir):
         for qfile in files:
@@ -19,7 +19,10 @@ def pickle_data(in_filedir, pickle_fname):
                 print(os.path.join(subdir,qfile))
                 qdata = read_data(os.path.join(subdir,qfile))
                 save_data.append(qdata)
+    return save_data
 
+def pickle_data(in_filedir, pickle_fname):
+    save_data = collect_qdata(in_filedir)
     pickle.dump(save_data, open(pickle_fname, 'wb'))
 
 if __name__ == "__main__":
