@@ -10,11 +10,13 @@ outdir = functionalize_catalyst.run(sys.argv[1], sys.argv[2], functionalize_cata
 # for nonmetal catalysts, you can put anything for the core (functionalize_catalyst.py ignores it)
 
 for file in os.listdir(outdir):
-    add_o2_frozen.run(outdir + "/" + file, True, True)
+    add_o2_frozen.run(outdir + "/" + file, True, True, True)
     # last two parameters control which species are bound to catalyst
 
-os.system("mkdir %s/catfunc/ %s/catfuncO2/ %s/catfuncOOH/ %s/catfuncO/ %s/catfuncOH/" %(outdir, outdir, outdir, outdir, outdir))
+os.system("mkdir %s/catfunc/ %s/catfuncO2/ %s/catfuncOOH/ %s/catfuncO/ %s/catfuncOH/ %s/catfuncCO/ %s/catfuncCN/" %(outdir, outdir, outdir, outdir, outdir, outdir, outdir))
 os.system("mv %s/*O2*.xyz %s/catfuncO2/" %(outdir, outdir))
+os.system("mv %s/*CO*.xyz %s/catfuncCO/" %(outdir, outdir))
+os.system("mv %s/*CN*.xyz %s/catfuncCN/" %(outdir, outdir))
 os.system("mv %s/*OOH*.xyz %s/catfuncOOH/" %(outdir, outdir))
 os.system("mv %s/*OH*.xyz %s/catfuncOH/" %(outdir, outdir))
 os.system("mv %s/*O*.xyz %s/catfuncO/" %(outdir, outdir))
