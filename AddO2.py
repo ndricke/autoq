@@ -31,9 +31,10 @@ class AddO2(object):
                                    'B': 2.027, 'N': 1.834, 'F': 1.707, 'Br': 2.423,
                                    'P': 2.297, 'S': 2.198, 'O': 1.810} # X-O (angstroms)
         self.dtheta = 5 # change this if you want to
+        self.binding_dict = {'O2': self.bindO2, 'O': self.bindO}
 
     def standardActiveSites(self):
-        active_site_dict = {"mepyr": [14,16], "tetrid": [16], "tetry": [18,26]}
+        active_site_dict = {"mepyr": [14,16], "tetrid": [16], "tetry": [17,26]}
         metal = self.molecule.findMetal()
         if len(metal) >= 1:
             self.catO_bond_length = 1.8
@@ -44,6 +45,7 @@ class AddO2(object):
             for key in active_site_dict.keys():
                 if key in self.infile:
                     self.catO_bond_length = 1.55
+                    self.OO_bond_length = 1.32
                     self.bond_angle = 111
                     self.reposition_O2 = True
                     return active_site_dict[key]
@@ -68,15 +70,63 @@ class AddO2(object):
             cross = np.cross(vec, v_theta + [0, 0, 1])
         return AddO2.scale_vector(cross, np.linalg.norm(vec)) # retains original magnitude
 
-    def bind_O2(self, site_index, catO_bond_length=1.8, bond_angle=120, OO_bond_length=1.3, reposition_O2=False):
-        # binds O2 perpendicular to catalyst plane, then makes .xyz file
-            # does not modify input molecule
-        # bond lengths in angstroms, angle in degrees. Variables set to parameters for Fe
-        molecule_copy = mol3D.mol3D()
+    def bindO2(self, site_index, molecule, v, bond_angle=111., OO_bond_length=1.32, catO_bond_length=1.55):
+        """
+        input:
+            molecule: (molSimplify mol class) molecule to modify in-place with O2
+            v: (np.array) coordinates to displace first O
+        output:
+            molecule modified with functional group O2
+        """
+
+        site_coords = molecule.atoms[site_index].coords()
+        v_O1 = self.scale_vector(v, catO_bond_length)
+        v_O2 = self.scale_vector(v, catO_bond_length + OO_bond_length * math.cos(math.pi - math.radians(bond_angle)))
+        theta_0 = 0 # arbitrarily chosen
+        v_perp = self.vec3_perp(self.scale_vector(v, self.OO_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta_0)
+        if v_perp == None: # shouldn't happen
+            return None
+        site_coords = molecule.atoms[site_index].coords()
+
+        molecule.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O1[c] for c in range(len(site_coords))]))
+        molecule.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O2[c] + v_perp[c] for c in range(len(site_coords))]))
+        #structgen.ffopt('MMFF94', molecule, [], 1, [], False, [], 200, False) # keeps failing
+        return molecule
+
+    def bindO(self, site_index, molecule, v, catO_bond_length=1.5):
+        """
+        input:
+            molecule: (molSimplify mol class) molecule to modify in-place with O2
+            v: (np.array) coordinates to displace first O
+        output:
+            molecule modified with functional group O2
+        """
+
+        site_coords = molecule.atoms[site_index].coords()
+        v_O1 = self.scale_vector(v, catO_bond_length)
+        site_coords = molecule.atoms[site_index].coords()
+
+        molecule.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O1[c] for c in range(len(site_coords))]))
+        #structgen.ffopt('MMFF94', molecule, [], 1, [], False, [], 200, False) # keeps failing
+        return molecule
+
+    def bindSpecies(self, site_index, species):
+        """
+        input:
+            site_index: (list of ints) sites to bind molecule to
+            species: (str) intermediate species or poison, presently limited to [O2, O2H, O, OH, CO, CN]
+        output:
+            None, but an xyz coordinate is saved
+        Notes:
+         binds O2 perpendicular to catalyst plane, then makes .xyz file
+         does not modify input molecule
+         bond lengths in angstroms, angle in degrees. Variables set to parameters for Fe
+        """
+        molecule_copy = mol3D.mol3D() #since the binding functions modify in-place, we need to make a copy here
         molecule_copy.copymol3D(self.molecule)
 
         connection_list = molecule_copy.getBondedAtomsSmart(site_index, oct = False)
-        #print("Active Site: %s       Neighbors: %s" %(str(site_index), str(connection_list))) # for debugging
+        print("Active Site: %s       Neighbors: %s" %(str(site_index), str(connection_list))) # for debugging
         try:
             v1 = molecule_copy.atoms[connection_list[0]].distancev(molecule_copy.atoms[connection_list[1]])
             v2 = molecule_copy.atoms[connection_list[0]].distancev(molecule_copy.atoms[connection_list[2]])
@@ -85,60 +135,31 @@ class AddO2(object):
             print("Error finding plane of catalyst.")
             return None
 
-        v_O1 = self.scale_vector(v, catO_bond_length)
-        v_O2 = self.scale_vector(v, catO_bond_length + OO_bond_length * math.cos(math.pi - math.radians(bond_angle)))
-        theta_0 = 0 # arbitrarily chosen
-        v_perp = self.vec3_perp(self.scale_vector(v, OO_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta_0)
-        if v_perp == None: # shouldn't happen
-            return None
-        site_coords = molecule_copy.atoms[site_index].coords()
+        bindFunction = self.binding_dict[species]
+        molecule_copy = bindFunction(site_index, molecule_copy, v)
 
-        molecule_copy.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O1[c] for c in range(len(site_coords))]))
-        molecule_copy.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O2[c] + v_perp[c] for c in range(len(site_coords))]))
-        #structgen.ffopt('MMFF94', molecule_copy, [], 1, [], False, [], 200, False) # keeps failing
-
-        if reposition_O2: # workaround for ffopt() failing to set up; nonmetal catalysts
-            theta = theta_0 + self.dtheta
-            position_OK = False
-            while not position_OK:
-                position_OK = True
-                for atom in molecule_copy.getAtoms():
-                    if atom == molecule_copy.getAtoms()[-1] or atom == molecule_copy.getAtoms()[-2]:
-                        continue
-                    if atom.symbol() in self.bond_length_cutoffs:
-                        cutoff = self.bond_length_cutoffs[atom.symbol()]
-                    else: # won't happen if bond_length_cutoffs is kept up to date
-                        cutoff = self.bond_length_cutoffs[max(self.bond_length_cutoffs, key = lambda key: self.bond_length_cutoffs[key])]
-                        print("Using %f A as the bond length cutoff for %s" %(cutoff, atom.symbol()))
-                    if molecule_copy.getAtoms()[-1].distance(atom) < cutoff:
-                        position_OK = False
-                        break
-                if not position_OK:
-                    if theta >= 360:
-                        print("%s may have geometry issues after O2-binding." %infile)
-                        break
-                    v_perp = self.vec3_perp(self.scale_vector(v, OO_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta)
-                    if v_perp == None: # shouldn't happen
-                        return None
-                    molecule_copy.getAtoms()[-1].setcoords([site_coords[c] + v_O2[c] + v_perp[c] for c in range(len(site_coords))])
-                    theta += self.dtheta
-
-        file_name = self.infile.split('.')[0] + "O2"
+        file_name_pieces = (self.infile.split('.')[0]).split('_')
+        file_name = file_name_pieces[0]+species+'_'+file_name_pieces[1]
         if len(self.active_sites) > 1: #only add active site in name if more than 1
             file_name += "-" + str(site_index) # still zero-indexed
         molecule_copy.writexyz(file_name)
 
-    def run(self):
+    def run(self, molecule):
         for site in self.active_sites:
-            self.bind_O2(site, catO_bond_length=self.catO_bond_length, bond_angle=self.bond_angle, reposition_O2=self.reposition_O2)
+            self.bindSpecies(site, molecule)
 
 if __name__ == "__main__":
     infile_dir = sys.argv[1]
+    species = sys.argv[2]
     if os.path.isdir(infile_dir):
         file_list = os.listdir(infile_dir)
         for infile in file_list:
             molecule_O2 = AddO2(infile_dir + '/' + infile)
-            molecule_O2.run()
+            molecule_O2.run(species)
     else:
-        molecule_O2 = AddO2(infile)
-        molecule_O2.run()
+        molecule_O2 = AddO2(infile_dir)
+        molecule_O2.run(species)
+
+
+
+

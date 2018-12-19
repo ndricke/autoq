@@ -36,8 +36,9 @@ class FuncCatalyst(object):
                         "dicyanamide", "nitroso",
                         "OC", "carboxyl","C=O",
                         "trifluoromethyl"]
-        #Default H indices, adjusting for molsimplify starting to iterate at 0. Corresponds to Ligand's index in molSimplify/Ligands
-        self.Hs_dict = {"porphyrin":[9, 10, 17, 18, 24, 25, 30, 31, 33, 34, 35, 36],
+        ##Default H indices, adjusting for molsimplify starting to iterate at 0. Corresponds to Ligand's index in molSimplify/Ligands
+        ##If using Avogadro numbers, subtract by one when giving to molSimplify
+        self.Hs_dict = {"porFe":[9, 10, 17, 18, 24, 25, 30, 31, 33, 34, 35, 36],
                     "phencir":[31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42],
                     "mepyr": [18,19,24],
                     "tetry": [15,24,25,28,29,30,31,32],
@@ -72,11 +73,11 @@ class FuncCatalyst(object):
         for func_index_set in func_index_list:
             for func_group_set in func_group_list:
 
-                #func_molecule = self.functionalize(func_index_set, func_group_set)
+                func_molecule = self.functionalize(func_index_set, func_group_set)
                 file_name = self.catalyst + "_func" + str(self.n)
                 ## I modified my own custom version of molSimplify to do this, but it's not crucial for the moment
                 ## Instead I'm going to just print the list of functionalizations to a file
-                #func_molecule.writexyz(file_name, comment = ' '.join([self.catalyst,str(func_index_set),str(func_group_set)]))
+                func_molecule.writexyz(file_name, comment = ' '.join([self.catalyst,str(func_index_set),str(func_group_set)]))
                 #func_molecule.writexyz(file_name) 
                 comment = ' '.join([str(self.n), self.catalyst,str(func_index_set),str(func_group_set),'\n'])
                 func_file_list.append(comment)
@@ -94,12 +95,18 @@ if __name__ == "__main__":
     parser.add_argument('-fn', help='Number of functionalizations', type=int)
     args = parser.parse_args()
 
-#    func_list = ['C','N','F','Cl']
-#    func_list = ['C=O']
+    #func_list = ['C','N','F','Cl']
+    #func_list = ['C=O']
 
     #H_index = [24,29,32] #specific H's for tetry
+    #H_index = [15,25,28,31] #tetry extended H's
+    H_index = [31,34,36,37] #tetrid extended H's
     #H_index = [30, 35] #specific H's for tetrid
-    H_index = None
+    #H_index = [43,44] #phencir vertical
+    #H_index = [40] #,42] #phencir diagonal horizontal
+    #H_index = [32] #,36] #phencir left-sided
+    #H_index = [9,27] #porphyrin middle-opposite
+    #H_index = None
 
     #func_list = None
     func_list = [ "C", "N", "O", "F", "Cl", "Br", # basis set doesn't include I

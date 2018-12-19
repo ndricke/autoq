@@ -63,7 +63,8 @@ class MatchO2(object):
         for i, entry in enumerate(self.catO2_df["CatalystO2_File_Name"]):
             catO2_entry_name = catalyst_name(entry)
             for qdata in qdatas:
-                if qdata.filename.split('_')[0] == catO2_entry_name:
+                #if qdata.filename.split('_')[0] == catO2_entry_name:
+                if qdata.filename.split('_')[1] == entry.split('_')[1]:
                     self.catO2_df.at[i, energy] = qdata.E
                     self.catO2_df.at[i, cat_fn] = qdata.filename
                     try:
