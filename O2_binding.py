@@ -9,15 +9,8 @@ import find_O2, pickle_qout
 from collections import OrderedDict
 
 def catalyst_name(str): # returns name of bare catalyst given catalystO2 .out file name
-    end = str.find("_") # we expect file name to contain "_" before job settings
-    beg = end
-    index = -1
-    while(index == -1):
-        if beg == -1:
-            return None
-        index = str.find("O2", beg, end)
-        beg -= 1
-    return str[0:index]
+    str_bn = os.path.basename(str)
+    return str_bn[0:str_bn[0:str_bn.find("_")].rfind("O2")]
 
 cat_dir, catO2_dir, cat_c1_dir = sys.argv[1].rstrip('/'), sys.argv[2].rstrip('/'), sys.argv[3].rstrip('/')
 # directories containing .out files
@@ -42,7 +35,7 @@ cat_c1_qdata = pickle.load(open(cat_c1_fn + ".p", "rb"))
 
 cat_list = []
 for entry in catO2_df["CatalystO2_File_Name"]:
-    cat_list.append(catalyst_name(entry)) # not sure if this ever causes trouble when a path is passed in
+    cat_list.append(catalyst_name(entry))
 
 # collect a0 bare catalyst data
 cat_fn_list, cat_energy_list, cat_AS_chelpg_list = [], [], []
