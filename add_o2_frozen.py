@@ -1,4 +1,4 @@
-# input: directory containing bare catalyst .mol and/or .xyz files
+# input: bare catalyst .mol or .xyz file/directory
 # creates .xyz files for corresponding O2-bound structures
 # catalysts with one metal atom only
 
@@ -8,6 +8,7 @@ from molSimplify.Scripts import structgen
 from molSimplify.Classes import mol3D, atom3D
 import numpy as np
 import math
+import argparse
 
 is_metal_catalyst = True
 
@@ -34,7 +35,7 @@ def find_active_sites(file_name, molecule):
     # use functionalize_catalyst.py first to ensure correct file names/indices
         # note that these indices are zero-indexed
     global is_metal_catalyst
-    if "mepyrid" in file_name:
+    if "mepyr" in file_name:
         is_metal_catalyst = False
         return [10, 12]
     elif "tetrids" in file_name:
@@ -62,8 +63,7 @@ def get_normal_vec(molecule_copy, site_index):
         print("Error finding plane of catalyst.")
         return None # the script doesn't always stop when this happens so be careful
 
-# bind_OOH(), bind_O(), bind_OH() are currently used for metal catalysts only
-    # and don't check for collisions but if this turns
+# bind_OOH() doesn't check for collisions but if this turns
     # out to be an actual issue then I'll add that in
 
 def bind_OOH(infile, molecule, site_index, catO_bond_length, catOO_bond_angle, OO_bond_length, OH_bond_length):
@@ -106,96 +106,29 @@ def bind_O(infile, molecule, site_index, catO_bond_length):
         file_name += "-" + str(site_index) # still zero-indexed
     molecule_copy.writexyz(file_name)
 
-def bind_OH(infile, molecule, site_index, catO_bond_length, bond_angle, OH_bond_length):
-    molecule_copy = mol3D.mol3D()
-    molecule_copy.copymol3D(molecule)
-
-    v = get_normal_vec(molecule_copy, site_index)
-    v_O = scale_vector(v, catO_bond_length)
-    v_H = scale_vector(v, catO_bond_length + OH_bond_length * math.cos(math.pi - math.radians(bond_angle)))
-    theta_0 = 0
-    v_perp = vec3_perp(scale_vector(v, OH_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta_0)
-    if v_perp == None: # shouldn't happen
-        return None
-
-    site_coords = molecule_copy.atoms[site_index].coords()
-
-    molecule_copy.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O[c] for c in range(len(site_coords))]))
-    molecule_copy.addAtom(mol3D.atom3D(Sym = 'H', xyz = [site_coords[c] + v_H[c] + v_perp[c] for c in range(len(site_coords))]))
-
-    file_name = infile.split('.')[0] + "OH"
-    if not is_metal_catalyst: # metal catalysts assumed to have one active site
-        file_name += "-" + str(site_index) # still zero-indexed
-    molecule_copy.writexyz(file_name)
-
-def bind_CO(infile, molecule, site_index, catC_bond_length, bond_angle, CO_bond_length):
-    molecule_copy = mol3D.mol3D()
-    molecule_copy.copymol3D(molecule)
-
-    v = get_normal_vec(molecule_copy, site_index)
-    v_C = scale_vector(v, catC_bond_length)
-    v_O = scale_vector(v, catC_bond_length + CO_bond_length * math.cos(math.pi - math.radians(bond_angle)))
-    theta_0 = 0
-    # note that v_perp is 0 when bond_angle is 180 deg
-    v_perp = vec3_perp(scale_vector(v, CO_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta_0)
-    if v_perp == None: # shouldn't happen
-        return None
-
-    site_coords = molecule_copy.atoms[site_index].coords()
-
-    molecule_copy.addAtom(mol3D.atom3D(Sym = 'C', xyz = [site_coords[c] + v_C[c] for c in range(len(site_coords))]))
-    molecule_copy.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O[c] + v_perp[c] for c in range(len(site_coords))]))
-
-    file_name = infile.split('.')[0] + "CO"
-    if not is_metal_catalyst: # metal catalysts assumed to have one active site
-        file_name += "-" + str(site_index) # still zero-indexed
-    molecule_copy.writexyz(file_name)
-
-def bind_CN(infile, molecule, site_index, catC_bond_length, bond_angle, CN_bond_length):
-    molecule_copy = mol3D.mol3D()
-    molecule_copy.copymol3D(molecule)
-
-    v = get_normal_vec(molecule_copy, site_index)
-    v_C = scale_vector(v, catC_bond_length)
-    v_N = scale_vector(v, catC_bond_length + CN_bond_length * math.cos(math.pi - math.radians(bond_angle)))
-    theta_0 = 0
-    # note that v_perp is 0 when bond_angle is 180 deg
-    v_perp = vec3_perp(scale_vector(v, CN_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta_0)
-    if v_perp == None: # shouldn't happen
-        return None
-
-    site_coords = molecule_copy.atoms[site_index].coords()
-
-    molecule_copy.addAtom(mol3D.atom3D(Sym = 'C', xyz = [site_coords[c] + v_C[c] for c in range(len(site_coords))]))
-    molecule_copy.addAtom(mol3D.atom3D(Sym = 'N', xyz = [site_coords[c] + v_N[c] + v_perp[c] for c in range(len(site_coords))]))
-
-    file_name = infile.split('.')[0] + "CN"
-    if not is_metal_catalyst: # metal catalysts assumed to have one active site
-        file_name += "-" + str(site_index) # still zero-indexed
-    molecule_copy.writexyz(file_name)
-
-def bind_O2(infile, molecule, site_index, catO_bond_length, bond_angle, OO_bond_length, reposition_O2):
-    # binds O2 perpendicular to catalyst plane, then makes .xyz file
+def bind_XY(infile, molecule, site_index, X, Y, catX_bond_length, bond_angle, XY_bond_length, reposition_XY, fn_suffix):
+    # XY is any diatomic species, with X closer to the active site
+    # positions XY perpendicular to catalyst plane, then makes .xyz file
         # does not modify input molecule
     # bond lengths in angstroms, angle in degrees
     molecule_copy = mol3D.mol3D()
     molecule_copy.copymol3D(molecule)
 
     v = get_normal_vec(molecule_copy, site_index)
-    v_O1 = scale_vector(v, catO_bond_length)
-    v_O2 = scale_vector(v, catO_bond_length + OO_bond_length * math.cos(math.pi - math.radians(bond_angle)))
+    v_X = scale_vector(v, catX_bond_length)
+    v_Y = scale_vector(v, catX_bond_length + XY_bond_length * math.cos(math.pi - math.radians(bond_angle)))
     theta_0 = 0 # arbitrarily chosen
-    v_perp = vec3_perp(scale_vector(v, OO_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta_0)
+    v_perp = vec3_perp(scale_vector(v, XY_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta_0)
     if v_perp == None: # shouldn't happen
         return None
 
     site_coords = molecule_copy.atoms[site_index].coords()
 
-    molecule_copy.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O1[c] for c in range(len(site_coords))]))
-    molecule_copy.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O2[c] + v_perp[c] for c in range(len(site_coords))]))
+    molecule_copy.addAtom(mol3D.atom3D(Sym = X, xyz = [site_coords[c] + v_X[c] for c in range(len(site_coords))]))
+    molecule_copy.addAtom(mol3D.atom3D(Sym = Y, xyz = [site_coords[c] + v_Y[c] + v_perp[c] for c in range(len(site_coords))]))
     #structgen.ffopt('MMFF94', molecule_copy, [], 1, [], False, [], 200, False) # keeps failing
 
-    if reposition_O2: # workaround for ffopt() failing to set up; nonmetal catalysts
+    if reposition_XY: # workaround for ffopt() failing to set up; nonmetal catalysts
         bond_length_cutoffs = {'C': 1.953, 'H': 1.443, 'I': 2.543, 'Cl': 2.154,
                                'B': 2.027, 'N': 1.834, 'F': 1.707, 'Br': 2.423,
                                'P': 2.297, 'S': 2.198, 'O': 1.810} # X-O (angstroms)
@@ -219,18 +152,18 @@ def bind_O2(infile, molecule, site_index, catO_bond_length, bond_angle, OO_bond_
                 if theta >= 360:
                     print("%s may have geometry issues after O2-binding." %infile)
                     break
-                v_perp = vec3_perp(scale_vector(v, OO_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta)
+                v_perp = vec3_perp(scale_vector(v, XY_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta)
                 if v_perp == None: # shouldn't happen
                     return None
-                molecule_copy.getAtoms()[-1].setcoords([site_coords[c] + v_O2[c] + v_perp[c] for c in range(len(site_coords))])
+                molecule_copy.getAtoms()[-1].setcoords([site_coords[c] + v_Y[c] + v_perp[c] for c in range(len(site_coords))])
                 theta += dtheta
 
-    file_name = infile.split('.')[0] + "O2"
+    file_name = infile.split('.')[0] + fn_suffix
     if not is_metal_catalyst: # metal catalysts assumed to have one active site
         file_name += "-" + str(site_index) # still zero-indexed
     molecule_copy.writexyz(file_name)
 
-def run(infile, add_O2, add_OOH_O_OH, add_CO_CN):
+def run(infile, add_O2, add_O2_reactant, add_OOH_O_OH, add_CO_CN):
     # changed from indir to infile to prevent segfaults
         # also, molecule no longer explicitly optimized in this function
     infile_type = infile.split('.')[-1]
@@ -248,17 +181,37 @@ def run(infile, add_O2, add_OOH_O_OH, add_CO_CN):
     if is_metal_catalyst:
         for site in active_sites: # expect len(active_sites) to be 1
             if add_O2:
-                bind_O2(infile, mol3D_O2, site, 1.8, 120, 1.3, False)
+                bind_XY(infile, mol3D_O2, site, "O", "O", 1.8, 120, 1.3, False, "O2")
+            if add_O2_reactant:
+                # 5 A should be enough to ensure that O2 not bound to catalyst
+                bind_XY(infile, mol3D_O2, site, "O", "O", 5, 120, 1.21, False, "-O2")
             if add_OOH_O_OH:
                 bind_OOH(infile, mol3D_O2, site, 1.762, 114.1, 1.457, 0.978)
                 bind_O(infile, mol3D_O2, site, 1.619)
-                bind_OH(infile, mol3D_O2, site, 1.852, 119.7, 0.973)
+                bind_XY(infile, mol3D_O2, site, "O", "H", 1.852, 119.7, 0.973, False, "OH")
             if add_CO_CN:
-                bind_CO(infile, mol3D_O2, site, 1.701, 180, 1.161)
-                bind_CN(infile, mol3D_O2, site, 1.847, 180, 1.179)
-    else:
+                bind_XY(infile, mol3D_O2, site, "C", "O", 1.701, 180, 1.161, False, "CO")
+                bind_XY(infile, mol3D_O2, site, "C", "N", 1.847, 180, 1.179, False, "CN")
+    else: # all functions already work for nonmetal catalysts-- just need the correct bond lengths
         for site in active_sites:
-            bind_O2(infile, mol3D_O2, site, 1.55, 111, 1.3, True)
+            if add_O2:
+                bind_XY(infile, mol3D_O2, site, "O", "O", 1.55, 111, 1.3, False, "O2")
+            if add_O2_reactant:
+                bind_XY(infile, mol3D_O2, site, "O", "O", 5, 120, 1.21, False, "-O2")
 
 if __name__ == "__main__":
-    run(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', help='input file/directory (bare catalyst .mol or .xyz)', type=str)
+    parser.add_argument('-O2', help='binds O2 to catalyst', type=bool,default=True)
+    parser.add_argument('-O2r', help='adds unbound O2 near catalyst', type=bool,default=False)
+    parser.add_argument('-intermediate', help='binds OOH, O, OH to catalyst', type=bool,default=False)
+    parser.add_argument('-poison', help='binds CO, CN to catalyst', type=bool,default=False)
+    args = parser.parse_args()
+
+    if os.path.isfile(args.f):
+        run(args.f, args.O2, args.O2r, args.intermediate, args.poison)
+    elif os.path.isdir(args.f):
+        for file in os.listdir(args.f):
+            run(file, args.O2, args.O2r, args.intermediate, args.poison)
+    else:
+        print("Invalid input for -f")

@@ -17,7 +17,7 @@ class QcIn(object):
 
         self.jobdict = {'sp':self.jobSp, 'opt':self.jobOpt, 'fq':self.jobFreq, 'sopt':self.jobSopt, \
                         'cube':self.jobCube, 'constr':self.jobConstrainedOpt, 'fixbonds':self.jobFixedBondOpt, \
-                        'cdft':self.jobCdft, \
+                        'cdft':self.jobCdft, 'ts':self.jobTs \
                        }
 
 #        self.bond_cons = [[2,5,con_N_x],[3,4,con_N_x],[2,3,con_N_y],[4,5,con_N_y]]
@@ -230,6 +230,12 @@ class QcIn(object):
         self.rem.jobtype("freq")
         self.rem.add("cpscf_nseg", "4")
 
+    #Transition State Job
+    def jobTs(self):
+        self.rem.jobtype("ts")
+        self.rem.add('scf_convergence','7')
+        self.rem.add("scf_algorithm", "diis_gdm") # comment out if job takes too long
+
     #standardized Q-Chem job naming scheme
     def genName(self):
         chmult = charge_tran[self.charge]+'m'+self.mult
@@ -249,7 +255,7 @@ class QcIn(object):
         job = qc.inputfile()
         self.jobdict[self.jobtype]()
         job.add(self.rem)
-        job.add(self.mol)
+        job.add(self.mol) # this is where coordinate info is added
         for job_arr in self.job_arr_list:
             job.add(job_arr)
         return job

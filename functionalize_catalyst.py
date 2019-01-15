@@ -10,9 +10,10 @@ from molSimplify.Scripts import structgen
 from molSimplify.Classes import mol3D, atom3D
 import numpy as np
 import math, random
+import argparse
 
 homedir = "/home/kjchen/" # modify as needed
-nonmetal_catalysts = ["mepyrid", "tetrids", "tetry"]
+nonmetal_catalysts = ["mepyr", "tetrids", "tetry"]
 
 def find_Hs(catalyst): # returns list of functionalizable atom indices
     # atom indices are one-indexed from .mol or .xyz file
@@ -22,7 +23,7 @@ def find_Hs(catalyst): # returns list of functionalizable atom indices
     elif catalyst == "nan":
         return [32, 33, 36, 37, 39, 42] # sterics
         #return [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
-    elif catalyst == "mepyrid":
+    elif catalyst == "mepyr":
         return [19, 24, 25]
     elif catalyst == "tetrids":
         return [30, 31, 32, 33, 34, 35, 36]
@@ -143,4 +144,12 @@ def run(catalyst, core, possible_func_indices, expected_num_funcs, num_molecules
     return outdir
 
 if __name__ == "__main__":
-    run(sys.argv[1], sys.argv[2], find_Hs(sys.argv[1]), int(sys.argv[3]), int(sys.argv[4]))
+    parser = argparse.ArgumentParser()
+    # for functionalize_catalyst
+    parser.add_argument('-cat', help='Catalyst name (porphyrin, nan, mepyr, tetrids, or tetry)', type=str)
+    parser.add_argument('-core', help='Metal atom', type=str,default="Fe")
+    parser.add_argument('-numFunc', help='Expected number of functionalizations per molecule', type=int)
+    parser.add_argument('-numMol', help='Number of molecules generated', type=int)
+    args = parser.parse_args()
+
+    run(args.cat, args.core, find_Hs(args.cat), args.numFunc, args.numMol)
