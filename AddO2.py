@@ -17,6 +17,7 @@ class AddO2(object):
         self.infile = infile
         infile_type = self.infile.split('.')[-1]
         print(self.infile)
+        self.OH_bond_length = 0.975
 
         self.molecule = mol3D.mol3D()
         self.molecule.OBMol = self.molecule.getOBMol(infile, infile_type, ffclean = False)
@@ -31,10 +32,11 @@ class AddO2(object):
                                    'B': 2.027, 'N': 1.834, 'F': 1.707, 'Br': 2.423,
                                    'P': 2.297, 'S': 2.198, 'O': 1.810} # X-O (angstroms)
         self.dtheta = 5 # change this if you want to
-        self.binding_dict = {'O2': self.bindO2, 'O': self.bindO}
+        self.binding_dict = {'O2': self.bindO2, 'O': self.bindO, 'OH': self.bindOH, 'O2H': self.bindO2H, 'CN' : self.bindCN, \
+                             'CO': self.bindCO}
 
     def standardActiveSites(self):
-        active_site_dict = {"mepyr": [14,16], "tetrid": [16], "tetry": [17,26]}
+        active_site_dict = {"mepyr": [14,16], "tetrid": [16], "tetry": [17,20]}
         metal = self.molecule.findMetal()
         if len(metal) >= 1:
             self.catO_bond_length = 1.8
@@ -92,6 +94,98 @@ class AddO2(object):
         molecule.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O2[c] + v_perp[c] for c in range(len(site_coords))]))
         #structgen.ffopt('MMFF94', molecule, [], 1, [], False, [], 200, False) # keeps failing
         return molecule
+
+    def bindO2H(self, site_index, molecule, v, bond_angle=111., OO_bond_length=1.32, catO_bond_length=1.55):
+        """
+        input:
+            molecule: (molSimplify mol class) molecule to modify in-place with O2
+            v: (np.array) coordinates to displace first O
+        output:
+            molecule modified with functional group O2H
+        """
+
+        
+        site_coords = molecule.atoms[site_index].coords()
+        v_O1 = self.scale_vector(v, catO_bond_length)
+        v_O2 = self.scale_vector(v, catO_bond_length + OO_bond_length * math.cos(math.pi - math.radians(bond_angle)))
+        v_H = self.scale_vector(v, self.OH_bond_length)
+        theta_0 = 0 # arbitrarily chosen
+        v_perp = self.vec3_perp(self.scale_vector(v, self.OO_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta_0)
+        if v_perp == None: # shouldn't happen
+            return None
+        site_coords = molecule.atoms[site_index].coords()
+
+        molecule.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O1[c] for c in range(len(site_coords))]))
+        molecule.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O2[c] + v_perp[c] for c in range(len(site_coords))]))
+        molecule.addAtom(mol3D.atom3D(Sym = 'H', xyz = [site_coords[c] + v_O2[c] + (v_perp[c]+v_H[c]) for c in range(len(site_coords))]))
+        #structgen.ffopt('MMFF94', molecule, [], 1, [], False, [], 200, False) # keeps failing
+        return molecule
+
+    def bindOH(self, site_index, molecule, v, bond_angle=111., OO_bond_length=1.32, catO_bond_length=1.55):
+        """
+        input:
+            molecule: (molSimplify mol class) molecule to modify in-place with O2
+            v: (np.array) coordinates to displace first O
+        output:
+            molecule modified with functional group OH
+        """
+
+        
+        site_coords = molecule.atoms[site_index].coords()
+        v_O1 = self.scale_vector(v, catO_bond_length)
+        v_H = self.scale_vector(v, catO_bond_length + self.OH_bond_length * math.cos(math.pi - math.radians(bond_angle)))
+        theta_0 = 0 # arbitrarily chosen
+        v_perp = self.vec3_perp(self.scale_vector(v, self.OH_bond_length * math.sin(math.pi - math.radians(bond_angle))), theta_0)
+        if v_perp == None: # shouldn't happen
+            return None
+        site_coords = molecule.atoms[site_index].coords()
+
+        molecule.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O1[c] for c in range(len(site_coords))]))
+        molecule.addAtom(mol3D.atom3D(Sym = 'H', xyz = [site_coords[c] + v_H[c] + v_perp[c] for c in range(len(site_coords))]))
+        #structgen.ffopt('MMFF94', molecule, [], 1, [], False, [], 200, False) # keeps failing
+        return molecule
+
+
+    def bindCO(self, site_index, molecule, v, CO_bond_length=1.18, catC_bond_length=1.48):
+        """
+        input:
+            molecule: (molSimplify mol class) molecule to modify in-place with O2
+            v: (np.array) coordinates to displace first O
+        output:
+            molecule modified with functional group OH
+        """
+
+        
+        site_coords = molecule.atoms[site_index].coords()
+        v_C = self.scale_vector(v, catC_bond_length)
+        v_O = self.scale_vector(v, catC_bond_length + CO_bond_length)
+        site_coords = molecule.atoms[site_index].coords()
+
+        molecule.addAtom(mol3D.atom3D(Sym = 'C', xyz = [site_coords[c] + v_C[c] for c in range(len(site_coords))]))
+        molecule.addAtom(mol3D.atom3D(Sym = 'O', xyz = [site_coords[c] + v_O[c] for c in range(len(site_coords))]))
+        #structgen.ffopt('MMFF94', molecule, [], 1, [], False, [], 200, False) # keeps failing
+        return molecule
+
+
+    def bindCN(self, site_index, molecule, v, CN_bond_length=1.16, catC_bond_length=1.49):
+        """
+        input:
+            molecule: (molSimplify mol class) molecule to modify in-place with O2
+            v: (np.array) coordinates to displace first O
+        output:
+            molecule modified with functional group OH
+        """
+
+        site_coords = molecule.atoms[site_index].coords()
+        v_C = self.scale_vector(v, catC_bond_length)
+        v_N = self.scale_vector(v, catC_bond_length + CN_bond_length)
+        site_coords = molecule.atoms[site_index].coords()
+
+        molecule.addAtom(mol3D.atom3D(Sym = 'C', xyz = [site_coords[c] + v_C[c] for c in range(len(site_coords))]))
+        molecule.addAtom(mol3D.atom3D(Sym = 'N', xyz = [site_coords[c] + v_N[c] for c in range(len(site_coords))]))
+        #structgen.ffopt('MMFF94', molecule, [], 1, [], False, [], 200, False) # keeps failing
+        return molecule
+
 
     def bindO(self, site_index, molecule, v, catO_bond_length=1.5):
         """
