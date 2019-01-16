@@ -37,7 +37,8 @@ def find_active_sites(file_name, molecule):
     global is_metal_catalyst
     if "mepyr" in file_name:
         is_metal_catalyst = False
-        return [10, 12]
+        #return [10, 12]
+        return [14]
     elif "tetrids" in file_name:
         is_metal_catalyst = False
         return [12, 17, 24]
@@ -211,7 +212,7 @@ if __name__ == "__main__":
     if os.path.isfile(args.f):
         run(args.f, args.O2, args.O2r, args.intermediate, args.poison)
     elif os.path.isdir(args.f):
-        for file in os.listdir(args.f):
-            run(file, args.O2, args.O2r, args.intermediate, args.poison)
+        for infile in os.listdir(args.f):
+            run(args.f+'/'+infile, args.O2, args.O2r, args.intermediate, args.poison)
     else:
         print("Invalid input for -f")
