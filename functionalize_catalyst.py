@@ -10,17 +10,20 @@ from molSimplify.Scripts import structgen
 from molSimplify.Classes import mol3D, atom3D
 import numpy as np
 import math, random
+import argparse
 
 homedir = "/home/kjchen/" # modify as needed
-nonmetal_catalysts = ["mepyrid", "tetrids", "tetry"]
+nonmetal_catalysts = ["mepyr", "tetrids", "tetry"]
 
 def find_Hs(catalyst): # returns list of functionalizable atom indices
     # atom indices are one-indexed from .mol or .xyz file
     if catalyst == "porphyrin":
-        return [9, 10, 17, 18, 24, 25, 30, 31, 33, 34, 35, 36]
+        return [9, 18, 25, 30, 34, 36] # every other H to reduce steric issues
+        #return [9, 10, 17, 18, 24, 25, 30, 31, 33, 34, 35, 36]
     elif catalyst == "nan":
-        return [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
-    elif catalyst == "mepyrid":
+        return [32, 33, 36, 37, 39, 42] # sterics
+        #return [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42]
+    elif catalyst == "mepyr":
         return [19, 24, 25]
     elif catalyst == "tetrids":
         return [30, 31, 32, 33, 34, 35, 36]
@@ -71,13 +74,15 @@ def list_to_string(list): # list should not be empty
 def functionalize(catalyst, core, possible_func_indices, expected_num_funcs, num_molecules, tempdir):
     # func_library: SMILES strings or built-in ligands; modify as needed
     # generally there are issues reading in strings containing []()
-    func_library = ["B", "C", "N", "O", "F", "P", "S", "Cl", "Br", # basis set doesn't include I
-                    "cyanide", "NC", "tricyanomethyl", "methylamine",
+    func_library = ["C", "N", "O", "F", "Cl", "Br", # basis set doesn't include I; B, P, S cause issues
+                    "cyanide",# "NC", "tricyanomethyl",
+                    "methylamine",
                     "dicyanamide", "nitroso",
                     "OC", "carboxyl",
                     "trifluoromethyl",
-                    "thiocyanate",
-                    "benzene_pi", "benzenethiol"]
+                    #"thiocyanate",
+                    #"benzene_pi", "benzenethiol"]
+                    "C=O"]
     for n in range(1, num_molecules + 1):
         file_name = catalyst + core + "-functionalized" + str(n)
         if catalyst in nonmetal_catalysts:
@@ -139,4 +144,12 @@ def run(catalyst, core, possible_func_indices, expected_num_funcs, num_molecules
     return outdir
 
 if __name__ == "__main__":
-    run(sys.argv[1], sys.argv[2], find_Hs(sys.argv[1]), int(sys.argv[3]), int(sys.argv[4]))
+    parser = argparse.ArgumentParser()
+    # for functionalize_catalyst
+    parser.add_argument('-cat', help='Catalyst name (porphyrin, nan, mepyr, tetrids, or tetry)', type=str)
+    parser.add_argument('-core', help='Metal atom', type=str,default="Fe")
+    parser.add_argument('-numFunc', help='Expected number of functionalizations per molecule', type=int)
+    parser.add_argument('-numMol', help='Number of molecules generated', type=int)
+    args = parser.parse_args()
+
+    run(args.cat, args.core, find_Hs(args.cat), args.numFunc, args.numMol)
