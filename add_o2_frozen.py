@@ -37,7 +37,7 @@ def find_active_sites(file_name, molecule):
     global is_metal_catalyst
     if "mepyr" in file_name:
         is_metal_catalyst = False
-        return [10, 12]
+        return [14]#[10, 12]
     elif "tetrids" in file_name:
         is_metal_catalyst = False
         return [12, 17, 24]
@@ -163,7 +163,7 @@ def bind_XY(infile, molecule, site_index, X, Y, catX_bond_length, bond_angle, XY
         file_name += "-" + str(site_index) # still zero-indexed
     molecule_copy.writexyz(file_name)
 
-def run(infile, add_O2, add_O2_reactant, add_OOH_O_OH, add_CO_CN):
+def run(infile, add_O2, add_O2_reactant, O2r_dist, add_OOH_O_OH, add_CO_CN):
     # changed from indir to infile to prevent segfaults
         # also, molecule no longer explicitly optimized in this function
     infile_type = infile.split('.')[-1]
@@ -183,8 +183,7 @@ def run(infile, add_O2, add_O2_reactant, add_OOH_O_OH, add_CO_CN):
             if add_O2:
                 bind_XY(infile, mol3D_O2, site, "O", "O", 1.8, 120, 1.3, False, "O2")
             if add_O2_reactant:
-                # 5 A should be enough to ensure that O2 not bound to catalyst
-                bind_XY(infile, mol3D_O2, site, "O", "O", 5, 120, 1.21, False, "-O2")
+                bind_XY(infile, mol3D_O2, site, "O", "O", O2r_dist, 120, 1.21, False, "-O2-%2.3f" %O2r_dist)
             if add_OOH_O_OH:
                 bind_OOH(infile, mol3D_O2, site, 1.762, 114.1, 1.457, 0.978)
                 bind_O(infile, mol3D_O2, site, 1.619)
@@ -197,21 +196,23 @@ def run(infile, add_O2, add_O2_reactant, add_OOH_O_OH, add_CO_CN):
             if add_O2:
                 bind_XY(infile, mol3D_O2, site, "O", "O", 1.55, 111, 1.3, False, "O2")
             if add_O2_reactant:
-                bind_XY(infile, mol3D_O2, site, "O", "O", 5, 120, 1.21, False, "-O2")
+                bind_XY(infile, mol3D_O2, site, "O", "O", O2r_dist, 120, 1.21, False, "-O2-%2.3f" %O2r_dist)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', help='input file/directory (bare catalyst .mol or .xyz)', type=str)
-    parser.add_argument('-O2', help='binds O2 to catalyst', type=bool,default=True)
+    parser.add_argument('-O2', help='binds O2 to catalyst', type=bool,default=False) # not sure why setting default=True makes this ignore the actual argument
     parser.add_argument('-O2r', help='adds unbound O2 near catalyst', type=bool,default=False)
     parser.add_argument('-intermediate', help='binds OOH, O, OH to catalyst', type=bool,default=False)
     parser.add_argument('-poison', help='binds CO, CN to catalyst', type=bool,default=False)
+    parser.add_argument('-O2rdist', help='distance (angstroms) between active site and unbound O2', type=float,default=3) # default should be enough to ensure that O2 not bound to catalyst
     args = parser.parse_args()
 
     if os.path.isfile(args.f):
-        run(args.f, args.O2, args.O2r, args.intermediate, args.poison)
+        run(args.f, args.O2, args.O2r, args.O2rdist, args.intermediate, args.poison)
     elif os.path.isdir(args.f):
         for file in os.listdir(args.f):
-            run(file, args.O2, args.O2r, args.intermediate, args.poison)
+            if file.split('.')[-1] == "xyz" or file.split('.') == "mol":
+                run(args.f.rstrip('/') + '/' + file, args.O2, args.O2r, args.O2rdist, args.intermediate, args.poison)
     else:
         print("Invalid input for -f")

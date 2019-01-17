@@ -233,8 +233,6 @@ class QcIn(object):
     #Transition State Job
     def jobTs(self):
         self.rem.jobtype("ts")
-        self.rem.add('scf_convergence','7')
-        self.rem.add("scf_algorithm", "diis_gdm") # comment out if job takes too long
 
     #standardized Q-Chem job naming scheme
     def genName(self):

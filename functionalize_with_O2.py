@@ -8,13 +8,13 @@ import argparse
 
 parser = argparse.ArgumentParser()
 # for functionalize_catalyst
-parser.add_argument('-cat', help='Catalyst name (porphyrin, nan, mepyrid, tetrids, or tetry)', type=str)
+parser.add_argument('-cat', help='Catalyst name (porphyrin, nan, mepyr, tetrids, or tetry)', type=str)
 parser.add_argument('-core', help='Metal atom', type=str,default="Fe")
 parser.add_argument('-numFunc', help='Expected number of functionalizations per molecule', type=int)
 parser.add_argument('-numMol', help='Number of molecules generated', type=int)
 
 # for add_o2_frozen
-parser.add_argument('-O2', help='binds O2 to catalyst', type=bool,default=True)
+parser.add_argument('-O2', help='binds O2 to catalyst', type=bool,default=False)
 parser.add_argument('-O2r', help='adds unbound O2 near catalyst', type=bool,default=False)
 parser.add_argument('-intermediate', help='binds OOH, O, OH to catalyst', type=bool,default=False)
 parser.add_argument('-poison', help='binds CO, CN to catalyst', type=bool,default=False)
