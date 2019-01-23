@@ -24,6 +24,7 @@ def collect_qdata(in_filedir):
 def pickle_data(in_filedir, pickle_fname):
     save_data = collect_qdata(in_filedir)
     pickle.dump(save_data, open(pickle_fname, 'wb'))
+    # not sure what directory this saves to since path isn't specified-- maybe current directory? be careful about overwriting
 
 if __name__ == "__main__":
     in_filedir = sys.argv[1]
