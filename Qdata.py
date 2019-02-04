@@ -56,13 +56,13 @@ class Qdata(object):
     with open(qchem_outfile, 'r') as f:
       for line in f:
         #if match with parse list, call function
-        
+
         self.trash_key_bin = [] #Any keys to be removed will be removed after iterating over the dictionary
         for item in self.parse_base.keys():
           if item in line:
             func_point = self.parse_base[item]
             func_point(f,line)
-            
+
         for trash_key in self.trash_key_bin:
             del self.parse_base[trash_key]
             print("Function parse routine complete. Removing key: "+trash_key)
@@ -115,6 +115,7 @@ class Qdata(object):
     if self.chelpg_flag == False:
         key_end = "--------------"
         atom_list, charge_list, spin_list = CD.ChargeGrab(key_end, infile)
+        charge_list = [float(c) for c in charge_list]
         self.chelpg = charge_list
         self.chelpg_flag = True
 
@@ -177,7 +178,7 @@ class Qdata(object):
         break
       grab_list.append(line.strip())
     self.atoms, self.coord = self.coordArr(grab_list)
-  
+
   def jobtype(self, infile, line):
     spline = line.split()
     self.job = spline[-1]
@@ -190,7 +191,7 @@ class Qdata(object):
         if key_end in line:
             break
         grab_list.append(line.strip())
-    print(grab_list)
+    #print(grab_list)
     grab_list.pop(-1)
 
     self.opt_atoms, self.opt_coord = self.coordArr(grab_list)
@@ -218,9 +219,9 @@ class Qdata(object):
       for i, item in enumerate(atom_list):
         f.write(item + '   ' + '   '.join([str(num) for num in coord_arr[i,:]])+'\n')
 
-    
 
-    
+
+
 
 #short testing module for reading a frequency calculation
 if __name__ == "__main__":
@@ -235,38 +236,13 @@ if __name__ == "__main__":
 
 #  print(qdata.atoms)
 #  print(qdata.chelpg)
-  
+
 #  Fe_charge = qdata.chelpg[qdata.atoms.index('Fe')]
 #  print(Fe_charge)
-#  print(qdata.spin)  
+#  print(qdata.spin)
 
 #  print(qdata.opt_coord)
 #  qdata.writeXYZ('test.xyz', qdata.opt_atoms, qdata.opt_coord)
 
   print(qdata.energy_list)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  print(qdata.chelpg)
