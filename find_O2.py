@@ -66,7 +66,7 @@ def create_df(in_pickle, save_df = True):
         O2_found, multiple_O2 = False, False
         try:
             energy_list.append(qdata.E)
-            #unopt_energy_list.append(qdata.energy_list[-7])
+            unopt_energy_list.append(qdata.energy_list[-7])
         except:
             energy_list.append(None)
         try:
@@ -176,16 +176,16 @@ def create_df(in_pickle, save_df = True):
         cat_elements.append(atom_coords[catalyst_index].split(' ')[0])
         cat_chelpgs.append(chelpgs[catalyst_index])
 
-
     O2_dict = {'CatalystO2_File_Name': filenames, 'CatalystO2_Energy': energy_list, 'Active_Site': cat_list,
                                      'Active_Site_ID': cat_elements, 'Oxygen_1': oxy1_list, 'Oxygen_2': oxy2_list,
                                      'CatalystO2_Active_Site_CHELPG': cat_chelpgs, 'Oxygen_1_CHELPG': oxy1_chelpgs,
                                      'Oxygen_2_CHELPG': oxy2_chelpgs,
                                      #'O2_CHELPG': total_oxy_chelpgs, # has rounding errors so do this manually on spreadsheet instead
-                                     #'Unopt_Cat-O2_Energy': unopt_energy_list,
+                                     'Unopt_Cat-O2_Energy': unopt_energy_list,
                                      'Cat-O2_Bond_Length': cat_O2_bond_lengths}
     O2_df = pd.DataFrame.from_dict(OrderedDict(O2_dict))
 
+    #print(O2_df)
     name = in_pickle.split('.')[0].split('/')[-1] # input pickle file name
     if save_df == True:
         O2_df.to_csv(name + '.csv')
