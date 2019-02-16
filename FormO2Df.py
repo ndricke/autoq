@@ -18,11 +18,9 @@ def catalyst_name(filename): # returns name of bare catalyst given catalystO2 .o
 # to match files of same catalyst with different bound species
 # run name_conv.py first if necessary
 def parse_filename(filename):
-    print(filename)
-    fn_fragments = filename.split('-') #split catalyst type from rest of catalyst info
-    cat_type = fn_fragments[0] #for example, tetrid
-    func_num = re.findall(r'\d+', fn_fragments[1])[0] #find all digits after func, ie 37 in func37
-    print(func_num)
+    fn_fragments = filename.split('-')
+    cat_type = fn_fragments[0]
+    func_num = re.findall(r'\d+', fn_fragments[1])[0]
     if len(fn_fragments) == 3:
         active_site = re.findall(r'\d+', fn_fragments[2])[0]
     else:
@@ -35,7 +33,6 @@ def parse_filename(filename):
 def same_catalyst(fn1, fn2, match_active_site):
     fn1_parsed, fn2_parsed = parse_filename(fn1), parse_filename(fn2)
     if match_active_site:
-        print(fn1_parsed, fn2_parsed)
         if fn1_parsed == fn2_parsed:
             return True
     else:
@@ -115,7 +112,6 @@ class MatchO2(object):
         for i, entry in enumerate(self.catO2_df["CatalystO2_File_Name"]):
             for qdata in qdatas:
                 if same_catalyst(entry, qdata.filename, not_bare):
-                    print("I found a match: ", qdata.filename)
                     self.catO2_df.at[i, energy] = qdata.E
                     self.catO2_df.at[i, cat_fn] = qdata.filename
                     try:
