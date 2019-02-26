@@ -88,7 +88,9 @@ if __name__ == "__main__":
     parser.add_argument('-nametrunc', help='Truncate name at first _', type=int,default=1)
     args = parser.parse_args()
 
-    multijob_dict = {'optsp':['opt','sp'], 'cdftsp':['cdft','sp'], 'optcdftsp':['opt','cdft','sp']}
+    multijob_dict = {'optsp':['opt','sp'], 'cdftsp':['cdft','sp'], 'optcdftsp':['opt','cdft','sp'], 'coptsp':['copt','sp'], \
+                     'cdftoptsp':['cdft','opt','sp']}
+    print(multijob_dict)
     job = multijob_dict[args.j]
 
     c, m = args.c, args.m

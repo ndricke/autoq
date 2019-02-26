@@ -17,7 +17,7 @@ class QcIn(object):
 
         self.jobdict = {'sp':self.jobSp, 'opt':self.jobOpt, 'fq':self.jobFreq, 'sopt':self.jobSopt, \
                         'cube':self.jobCube, 'constr':self.jobConstrainedOpt, 'fixbonds':self.jobFixedBondOpt, \
-                        'cdft':self.jobCdft, 'ts':self.jobTs \
+                        'cdft':self.jobCdft, 'ts':self.jobTs, 'copt':self.jobCdftOpt \
                        }
 
 #        self.bond_cons = [[2,5,con_N_x],[3,4,con_N_x],[2,3,con_N_y],[4,5,con_N_y]]
@@ -165,6 +165,12 @@ class QcIn(object):
         #self.mol = qc.mol_array(xyz)
         #self.mol.charge(self.charge)
         #self.mol.multiplicity(self.mult)
+
+#CDFT calculation with geometry optimization
+    def jobCdftOpt(self):
+        self.jobCdft()
+        self.jobOpt()
+
 
 #Fix all but selected atom numbers
     def jobConstrainedOpt(self):
