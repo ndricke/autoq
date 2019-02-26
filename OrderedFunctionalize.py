@@ -77,7 +77,7 @@ class FuncCatalyst(object):
                 file_name = self.catalyst + "_func" + str(self.n)
                 ## I modified my own custom version of molSimplify to do this, but it's not crucial for the moment
                 ## Instead I'm going to just print the list of functionalizations to a file
-                func_molecule.writexyz(file_name, comment = ' '.join([self.catalyst,str(func_index_set),str(func_group_set)]))
+                func_molecule.writexyz(file_name) #, comment = ' '.join([self.catalyst,str(func_index_set),str(func_group_set)]))
                 #func_molecule.writexyz(file_name) 
                 comment = ' '.join([str(self.n), self.catalyst,str(func_index_set),str(func_group_set),'\n'])
                 func_file_list.append(comment)
@@ -100,7 +100,8 @@ if __name__ == "__main__":
 
     #H_index = [24,29,32] #specific H's for tetry
     #H_index = [15,25,28,31] #tetry extended H's
-    H_index = [31,34,36,37] #tetrid extended H's
+    #H_index = [31,34,36,37] #tetrid extended H's
+    H_index = [38] #tetrid active site H
     #H_index = [30, 35] #specific H's for tetrid
     #H_index = [43,44] #phencir vertical
     #H_index = [40] #,42] #phencir diagonal horizontal
