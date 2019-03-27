@@ -12,6 +12,23 @@ charge_tran = {'a1':-1,'a0':0,'c1':1,'c2':2}
 revd=dict([reversed(i) for i in charge_tran.items()])
 charge_tran.update(revd)
 
+def loadXYZ(xyz_filename):
+    with open(xyz_filename) as f:
+        #f.nextline(); f.nextline();
+        coord_list = []
+        next(f); next(f);
+        for line in f:
+            coord_list.append(line)
+
+    coord = np.zeros((len(coord_list),3))
+    atoms = []
+    for i, line in enumerate(coord_list):
+        spline = line.split()
+        atoms.append(spline[0])
+        coord[i,:] = [float(j) for j in spline[1:]]
+    return atoms, coord
+
+
 def chunkGrab(infile, key, chunk_size, start_cut=1):
     chunk = []
     with open(infile,'r') as f:
@@ -157,7 +174,7 @@ def WriteXYZ(xyz_filename, xyz):
         f_out.write(str(len(xyz)) + '\n\n')
         for item in xyz:
             f_out.write('%s\n' %' '.join(item))
-    
+
 
 #under development
 def freqParse(in_file,in_dir):

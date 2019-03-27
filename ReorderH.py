@@ -13,8 +13,9 @@ for infile in os.listdir(indir):
     with open(indir+"/"+infile, 'r') as f:
         fl = list(f)
         for i, line in enumerate(fl):
-            if line.split()[0] == 'H':
-                H_lines.append(i)
+            if len(line) > 1:
+                if line.split()[0] == 'H':
+                    H_lines.append(i)
 
     print(H_lines)
     print(len(fl))

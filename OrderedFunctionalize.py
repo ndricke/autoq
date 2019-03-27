@@ -100,8 +100,9 @@ if __name__ == "__main__":
 
     #H_index = [24,29,32] #specific H's for tetry
     #H_index = [15,25,28,31] #tetry extended H's
+    H_index = [31] #tetry extended H's
     #H_index = [31,34,36,37] #tetrid extended H's
-    H_index = [38] #tetrid active site H
+    #H_index = [38] #tetrid active site H
     #H_index = [30, 35] #specific H's for tetrid
     #H_index = [43,44] #phencir vertical
     #H_index = [40] #,42] #phencir diagonal horizontal
