@@ -2,14 +2,14 @@ import numpy as np
 import pandas as pd
 import sys
 import os
-import pickle
+import dill
 import subprocess
 from collections import OrderedDict
 import argparse
 import re
 
 import Qdata
-import find_O2, pickle_qout
+import find_O2, dill_qout
 
 # check the file name format if this doesn't work
 def catalyst_name(filename): # returns name of bare catalyst given catalystO2 .out file name
@@ -18,6 +18,11 @@ def catalyst_name(filename): # returns name of bare catalyst given catalystO2 .o
 # to match files of same catalyst with different bound species
 # run name_conv.py first if necessary
 def parse_filename(filename):
+    if True: # janky workaround for SciFinder file names; make False otherwise
+        if "-" in filename:
+            return [filename[2:filename.find('x')], filename[filename.find('x') + 1], filename[filename.find('-') + 1:filename.find('_')]]
+        else:
+            return [filename[2:filename.find('x')], filename[filename.find('x') + 1], None]
     fn_fragments = filename.split('-')
     cat_type = fn_fragments[0]
     func_num = re.findall(r'\d+', fn_fragments[1])[0]
@@ -43,15 +48,15 @@ def same_catalyst(fn1, fn2, match_active_site):
 def GenLoadCat(cat_dir, save=False):
     if cat_dir == None:
         return None
-    qdata_list = pickle_qout.collect_qdata(cat_dir)
+    qdata_list = dill_qout.collect_qdata(cat_dir)
     if save == True:
         cat_fn = cat_dir.rstrip('/').split('/')[-1].split('.')[0] # sometimes the . is a -? not standardized
-        pickle.dump(qdata_list, open(cat_fn+'.p', 'wb'))
+        dill.dump(qdata_list, open(cat_fn+'.p', 'wb'))
     return qdata_list
 
 def GenLoadCatO2(catO2_dir, save=False):
     catO2_fn = catO2_dir.rstrip('/').split('/')[-1].split('.')[0]
-    pickle_qout.pickle_data(catO2_dir, catO2_fn + ".p")
+    dill_qout.pickle_data(catO2_dir, catO2_fn + ".p")
     O2_df = find_O2.create_df(catO2_fn + ".p", save_df=save) #use find_O2 to generate a dataframe from a list of Qdata objects
     return O2_df
 
@@ -143,26 +148,35 @@ if __name__ == "__main__":
         and os.path.isfile(args.OH+'.p') and os.path.isfile(args.O+'.p')
         and os.path.isfile(args.CO+'.p')): #and os.path.isfile(args.CN+'.p')):
 
-        cat_qdata_list = pickle.load(open(args.bare + ".p", "rb"))
-        cation_qdata_list = pickle.load(open(args.cation + ".p", "rb"))
-        O2_df = pickle.load(open(args.O2 + "_df.p", "rb"))
-        OOH_qdata_list = pickle.load(open(args.OOH + ".p", "rb"))
-        OH_qdata_list = pickle.load(open(args.OH + ".p", "rb"))
-        O_qdata_list = pickle.load(open(args.O + ".p", "rb"))
-        CO_qdata_list = pickle.load(open(args.CO + ".p", "rb"))
-        #CN_qdata_list = pickle.load(open(args.CN + ".p", "rb"))
+        cat_qdata_list = dill.load(open(args.bare + ".p", "rb"))
+        cation_qdata_list = dill.load(open(args.cation + ".p", "rb"))
+        O2_df = dill.load(open(args.O2 + "_df.p", "rb"))
+        OOH_qdata_list = dill.load(open(args.OOH + ".p", "rb"))
+        OH_qdata_list = dill.load(open(args.OH + ".p", "rb"))
+        O_qdata_list = dill.load(open(args.O + ".p", "rb"))
+        CO_qdata_list = dill.load(open(args.CO + ".p", "rb"))
+        #CN_qdata_list = dill.load(open(args.CN + ".p", "rb"))
 
         for in_list in [cat_qdata_list, cation_qdata_list, OOH_qdata_list, OH_qdata_list, CO_qdata_list]:
             print(len(in_list))
     else:
-        cat_qdata_list = GenLoadCat(args.bare, save=args.save)
-        cation_qdata_list = GenLoadCat(args.cation, save=args.save)
-        O2_df = GenLoadCatO2(args.O2, save=args.save)
-        OOH_qdata_list = GenLoadCat(args.OOH, save=args.save)
-        OH_qdata_list = GenLoadCat(args.OH, save=args.save)
-        O_qdata_list = GenLoadCat(args.O, save=args.save)
-        CO_qdata_list = GenLoadCat(args.CO, save=args.save)
-        CN_qdata_list = GenLoadCat(args.CN, save=args.save)
+        cat_qdata_list, cation_qdata_list, O2_df, OOH_qdata_list, OH_qdata_list, O_qdata_list, CO_qdata_list, CN_qdata_list = [], [], [], [], [], [], [], []
+        if not cat_qdata_list == None:
+            cat_qdata_list = GenLoadCat(args.bare, save=args.save)
+        if not cation_qdata_list == None:
+            cation_qdata_list = GenLoadCat(args.cation, save=args.save)
+        if not O2_df == None:
+            O2_df = GenLoadCatO2(args.O2, save=args.save)
+        if not OOH_qdata_list == None:
+            OOH_qdata_list = GenLoadCat(args.OOH, save=args.save)
+        if not OH_qdata_list == None:
+            OH_qdata_list = GenLoadCat(args.OH, save=args.save)
+        if not O_qdata_list == None:
+            O_qdata_list = GenLoadCat(args.O, save=args.save)
+        if not CO_qdata_list == None:
+            CO_qdata_list = GenLoadCat(args.CO, save=args.save)
+        if not CN_qdata_list == None:
+            CN_qdata_list = GenLoadCat(args.CN, save=args.save)
 
     match = MatchO2(O2_df, cat_qdata_list, cation_qdata_list,
         OOH_qdata_list, OH_qdata_list, O_qdata_list, CO_qdata_list) #, CN_qdata_list)
