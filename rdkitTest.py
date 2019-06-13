@@ -67,6 +67,8 @@ def isInRing(atom):
     return_list.append(0)
     return return_list
 
+def getAromaticSize(atom):
+    return (atom.GetIdx(), len(atom.GetOwningMol().GetAromaticAtoms()))
     
 def getShortestPathToN(atom, file):
     molecule = atom.GetOwningMol()

@@ -56,7 +56,7 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
 
     
     for catalyst in unique_catalysts:#generate dictionary of catalyst dataframes
-        catalyst_dictionary[catalyst] = pd.DataFrame(columns=["Catalyst Name", "CatalystO2File", "Atom Number", "Element", "SpinDensity", "ChElPGNeutralCharge", "Doesitbind", "BondLength", "BindingEnergy", "NeutralFreeEnergy","DistanceToN", "NumberOfHydrogens", "IsInRingSize6", "IsInRingSize5", "NeighborSpinDensity", "NeighborChElPGCharge", "NeighborChargeDifference"])
+        catalyst_dictionary[catalyst] = pd.DataFrame(columns=["Catalyst Name", "CatalystO2File", "Atom Number", "Element", "SpinDensity", "ChElPGNeutralCharge", "Doesitbind", "BondLength", "BindingEnergy", "NeutralFreeEnergy","DistanceToN", "NumberOfHydrogens", "AromaticSize", "IsInRingSize6", "IsInRingSize5", "NeighborSpinDensity", "NeighborChElPGCharge", "NeighborChargeDifference"])
 
 
     print("Individual catalyst dataframes created!")
@@ -75,6 +75,7 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
         appendlist.append(0)
         appendlist.append(0)
         appendlist.append(row['Total Free Energy'])
+        appendlist.append(0)
         appendlist.append(0)
         appendlist.append(0)
         appendlist.append(0)
@@ -186,6 +187,11 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
                             dataframe.at[(index3+1), 'IsInRingSize6'] = 1
                         elif ringSize==5:
                             dataframe.at[(index3+1), 'IsInRingSize5'] = 1
+                            
+                        return_list_4 = rdkitTest.getAromaticSize(atom)
+                        index4 = return_list_4[0]
+                        totalAromatic = return_list_4[1]
+                        dataframe.at[(index4+1), 'AromaticSize'] = totalAromatic
                         #print (dataframe['DistanceToN'])
                     
     for index, row in O2_bound_data.iterrows():#add data from O2 binding
