@@ -1,7 +1,11 @@
+import pandas as pd
+import numpy as np
 import sys
+import pandas as pd
 import os
 import rdkit
 from rdkit import Chem
+from rdkit.Chem import AllChem
 
 
 
@@ -16,6 +20,44 @@ def openFiles(input_directory):
             #print(catalyst_dict[file])
     return(catalyst_dict)
     
+def getBondLengths(atom):
+    index = atom.GetIdx()
+    neighbors = atom.GetNeighbors()
+    mol = atom.GetOwningMol()
+    conformer = AllChem.EmbedMolecule(mol)
+    conformer_obj = (mol.GetConformer(conformer))
+    me_list = []
+    my_id_list = []
+    neighbor_list = []
+    neighbor_ID_list = []
+    distance_list = []
+    for neighbor in neighbors:
+        #print ("Begin index: ", atom.GetIdx(), "Atomic no.: ", atom.GetAtomicNum())
+        #print ("Begin index: ", neighbor.GetIdx(), "Atomic no.: ", neighbor.GetAtomicNum())
+        neighbor_index = neighbor.GetIdx()
+        neighbor_ID = convertToElem(neighbor.GetAtomicNum())
+        distance = AllChem.GetBondLength(conformer_obj, index, neighbor_index)
+        me_list.append(index)
+        my_id_list.append(convertToElem(atom.GetAtomicNum()))
+        neighbor_list.append(neighbor_index)
+        distance_list.append(distance)
+        neighbor_ID_list.append(neighbor_ID)
+    full_data = [me_list, my_id_list, neighbor_list, neighbor_ID_list, distance_list]
+    df = pd.DataFrame(full_data)
+    df = df.transpose()
+    df.columns = ['Index', 'Element', 'Neighbors', 'NeighborID', 'Distance']
+    return(df)
+    
+        
+def convertToElem(num):
+    if num == 6:
+        return 'C'
+    elif num == 7:
+        return 'N'
+    elif num == 1:
+        return 'H'
+    
+
     
 def getNeighbors(file):
     neighbors_dict = {}
