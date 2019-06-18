@@ -114,9 +114,9 @@ def plotData(X, y, dtc, f1, f2):
 
 
     
-def classify(cat, O2, plusone, mol, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, c, poly, onehot, confusion, plotcoef):
+def classify(cat, O2, plusone, mol, xyz, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, c, poly, onehot, confusion, plotcoef, checkmissed):
     
-    alldata = doesitbind.collectData(cat, O2, plusone, mol)
+    alldata = doesitbind.collectData(cat, O2, plusone, mol, xyz)
     #print(alldata.loc[(alldata["SpinDensity"]>0.27)  & (alldata["Doesitbind"]==False)])
     #print(alldata)
     testcolumn = alldata['Doesitbind']
@@ -173,7 +173,7 @@ def classify(cat, O2, plusone, mol, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f
     mlp.fit(X_train, y_train)
     print('Accuracy of MLP classifier on test set: {:.2f}'.format(mlp.score(X_test, y_test)))
     
-    linsvc = LinearSVC()
+    linsvc = LinearSVC(C = float(c))
     linsvc.fit(X_train, y_train)
     print('Accuracy of LinearSVC classifier on test set: {:.2f}'.format(linsvc.score(X_test, y_test)))
     
@@ -198,7 +198,8 @@ def classify(cat, O2, plusone, mol, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f
         bind = tuple[2]
         distance = tuple[3]
         spin = tuple[4]
-        print(name, " at index ", index, "\nDoes it bind? ", bind, "\nDistance to N is ", distance, "\nSpin density is", spin, "\n")
+        if checkmissed != 0:
+            print(name, " at index ", index, "\nDoes it bind? ", bind, "\nDistance to N is ", distance, "\nSpin density is", spin, "\n")
     #print(svc.dual_coef_)
     #print(svc.get_params())
     #for index in misclassified:
@@ -228,6 +229,7 @@ if __name__ == "__main__":
     parser.add_argument('-O2', help='O2 bound directory', type=str)
     parser.add_argument('-plusone', help='Plus one data for bare catalyst to grab charge difference data', default = None, type=str)
     parser.add_argument('-mol', help='Mol files for bare catalyst to grab neighbor data', default = None, type=str)
+    parser.add_argument('-xyz', help='xyz files for bare catalyst to grab bond length data', default = None, type=str)
     parser.add_argument('-f1', help = 'First feature to compare against, default to spin density', default = 'SpinDensity', type = str)
     parser.add_argument('-f2', help = "Second feature to compare against, like ChElPGNeutralCharge, Doesitbind, BindingEnergy, NeutralFreeEnergy, NeighborSpinDensity, NeighborChElPGCharge, NeighborChargeDifference", type = str)
     parser.add_argument('-plot', help = 'Choose classifier to plot', default = None, type = str)
@@ -245,7 +247,7 @@ if __name__ == "__main__":
     parser.add_argument('-onehot', help = "Enable one-hot encoder", default = 0)
     parser.add_argument('-confusion', help = "Enable confusion matrix", default = 0)
     parser.add_argument('-plotcoef', help = "Enable coefficient plot", default = 0)
-
+    parser.add_argument('-misclassified', help = "Enable misclassification analysis", default = 0)
 
     args = parser.parse_args()
 
@@ -253,6 +255,7 @@ if __name__ == "__main__":
     O2_bound_directory = args.O2
     plusone_directory = args.plusone
     molfiles_directory = args.mol
+    xyz_directory = args.xyz
     whichplot = args.plot
     
-    classify(catalyst_only_directory, O2_bound_directory, plusone_directory, molfiles_directory, whichplot, args.f1, args.f2, args.f3, args.f4, args.f5, args.f6, args.f7, args.f8, args.f9, args.f10, args.c, args.poly, args.onehot, args.confusion, args.plotcoef)
+    classify(catalyst_only_directory, O2_bound_directory, plusone_directory, molfiles_directory, xyz_directory, whichplot, args.f1, args.f2, args.f3, args.f4, args.f5, args.f6, args.f7, args.f8, args.f9, args.f10, args.c, args.poly, args.onehot, args.confusion, args.plotcoef, args.misclassified)

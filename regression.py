@@ -17,9 +17,9 @@ from sklearn import svm
 from math import sqrt
 
 
-def linearRegression(cat, O2, plusone, mol, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10):
+def linearRegression(cat, O2, plusone, mol, xyz, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10):
 
-    alldata = doesitbind.collectData(cat, O2, plusone, mol)
+    alldata = doesitbind.collectData(cat, O2, plusone, mol, xyz)
     print(alldata.size)
     alldata = alldata[(alldata["Doesitbind"] == True) & (alldata["BindingEnergy"]>-1.5)]
     print(alldata.size)
@@ -85,6 +85,7 @@ if __name__ == "__main__":
     parser.add_argument('-O2', help='O2 bound directory', type=str)
     parser.add_argument('-plusone', help='Plus one data for bare catalyst to grab charge difference data', default = None, type=str)
     parser.add_argument('-mol', help='Mol files for bare catalyst to grab neighbor data', default = None, type=str)
+    parser.add_argument('-xyz', help='XYZ files for bare catalyst to grab bond data', default = None, type=str)
     parser.add_argument('-f1', help = 'First feature to compare against, default to spin density', default = 'SpinDensity', type = str)
     parser.add_argument('-f2', help = "Second feature to compare against, like ChElPGNeutralCharge, Doesitbind, BindingEnergy, NeutralFreeEnergy, NeighborSpinDensity, NeighborChElPGCharge, NeighborChargeDifference", type = str)
     parser.add_argument('-f3', help = 'Third feature', default = None)
@@ -100,4 +101,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     
-    linearRegression(args.cat, args.O2, args.plusone, args.mol, args.f1, args.f2, args.f3, args.f4, args.f5, args.f6, args.f7, args.f8, args.f9, args.f10)
+    linearRegression(args.cat, args.O2, args.plusone, args.mol, args.xyz, args.f1, args.f2, args.f3, args.f4, args.f5, args.f6, args.f7, args.f8, args.f9, args.f10)

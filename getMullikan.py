@@ -65,7 +65,7 @@ def makeDataFrame(input):
     df = pd.DataFrame()
     for file in os.listdir(input):
         #print(file)
-        fullfilepath = input + "\\" + file
+        fullfilepath = os.path.join(input, file)
         if file.endswith(".out"):
             # print("Processing", file)
             mulliken_part = getAttributes("Mulliken", fullfilepath)
@@ -109,6 +109,6 @@ if __name__ == "__main__":
     inputdirectory = args.cat
     outputdirectory = args.out
     finaldf = makeDataFrame(inputdirectory)
-    finalpath = outputdirectory + "\\" + 'catalyst_data.csv'
+    finalpath = os.path.join(outputdirectory,  'catalyst_data.csv')
     print("Now writing to csv...")
     finaldf.to_csv(finalpath)

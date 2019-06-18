@@ -8,17 +8,18 @@ import rdkit
 from rdkit import Chem
 import matplotlib.pyplot as plt
 import seaborn
+import getBondLengths
 seaborn.set(style='ticks')
 
 
-def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, molfiles_directory):
+def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, molfiles_directory, xyz_directory):
     if plusone_directory != None:
         #print("here!")
         plusone_dict = {}
         
         for file in os.listdir(plusone_directory):
             #print(file)
-            fullfilepath = plusone_directory + "\\" + file
+            fullfilepath = os.path.join(plusone_directory, file)
             if file.endswith(".out"):
                 #print("Processing", file)
                 chelpg_part = getMullikan.getAttributes("ChElPG", fullfilepath)
@@ -32,7 +33,7 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
         
         for file in os.listdir(plusone_directory):
             #print(file)
-            fullfilepath = plusone_directory + "\\" + file
+            fullfilepath = os.path.join(plusone_directory, file)
             if file.endswith(".out"):
                 #print("Processing", file)
                 energy_part = getMullikan.getAttributes("Energy", fullfilepath)
@@ -56,7 +57,7 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
 
     
     for catalyst in unique_catalysts:#generate dictionary of catalyst dataframes
-        catalyst_dictionary[catalyst] = pd.DataFrame(columns=["Catalyst Name", "CatalystO2File", "Atom Number", "Element", "SpinDensity", "ChElPGNeutralCharge", "Doesitbind", "BondLength", "BindingEnergy", "NeutralFreeEnergy","DistanceToN", "NumberOfHydrogens", "AromaticSize", "IsInRingSize6", "IsInRingSize5", "NeighborSpinDensity", "NeighborChElPGCharge", "NeighborChargeDifference"])
+        catalyst_dictionary[catalyst] = pd.DataFrame(columns=["Catalyst Name", "CatalystO2File", "Atom Number", "Element", "SpinDensity", "ChElPGNeutralCharge", "Doesitbind", "BondLength", "BindingEnergy", "NeutralFreeEnergy","DistanceToN", "AverageBondLength", "BondLengthRange", "NumberOfHydrogens", "AromaticSize", "IsInRingSize6", "IsInRingSize5", "NeighborSpinDensity", "NeighborChElPGCharge", "NeighborChargeDifference"])
 
 
     print("Individual catalyst dataframes created!")
@@ -75,6 +76,8 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
         appendlist.append(0)
         appendlist.append(0)
         appendlist.append(row['Total Free Energy'])
+        appendlist.append(0)
+        appendlist.append(0)
         appendlist.append(0)
         appendlist.append(0)
         appendlist.append(0)
@@ -131,14 +134,18 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
                 appendlist.append(difference)
                 #print(appendlist)
             df.insert(10, 'IonizationEnergy', appendlist, allow_duplicates = False)    
-
     if molfiles_directory != None:
         for catalyst_name, dict in neighboring_spindensity_dict.items():#add neighboring spin density
             for catalyst in unique_catalysts:
                 shortened_catalyst_name = catalyst.split('_', 1)[0]
+                #test = catalyst.split('.', 1)[0]
                 if shortened_catalyst_name in catalyst_name:
                     # print (catalyst)
                     dataframe = catalyst_dictionary[catalyst]
+                    if xyz_directory != None:
+                        xyz_df = getBondLengths.makeXYZ(catalyst, xyz_directory)
+                        dataframe = getBondLengths.appendBondLengths(dataframe, dict, xyz_df)
+                        
                     # print (dataframe.index)
                     # print (dataframe['Element'])
                     for index, row in dataframe.iterrows():
@@ -161,7 +168,7 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
             dataframe = catalyst_dictionary[catalyst]
             for file in os.listdir(molfiles_directory):
                 shortened_catalyst_name = catalyst.split('_', 1)[0]
-                full_path = molfiles_directory + "\\" + file
+                full_path = os.path.join(molfiles_directory, file)
                 if shortened_catalyst_name in file:
                     m = Chem.MolFromMolFile(full_path, removeHs = False)
                     for atom in m.GetAtoms():
@@ -244,6 +251,7 @@ if __name__ == "__main__":
     parser.add_argument('-O2', help='O2 bound directory', type=str)
     parser.add_argument('-plusone', help='Plus one data for bare catalyst to grab charge difference data', default = None, type=str)
     parser.add_argument('-mol', help='Mol files for bare catalyst to grab neighbor data', default = None, type=str)
+    parser.add_argument('-xyz', help='Xyz files for bare catalyst to grab bond length data', default = None, type=str)
 
     args = parser.parse_args()
 
@@ -251,12 +259,13 @@ if __name__ == "__main__":
     O2_bound_directory = args.O2
     plusone_directory = args.plusone
     molfiles_directory = args.mol
+    xyz_directory = args.xyz
     
-    alldata = collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, molfiles_directory)
+    alldata = collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, molfiles_directory, xyz_directory)
     alldata.to_csv('DidItBind.csv')
     
-    fg = seaborn.FacetGrid(data=alldata, hue='Doesitbind', aspect=1.61)
-    fg.map(plt.scatter, 'SpinDensity', 'ChElPGNeutralCharge').add_legend()
+    fg = seaborn.FacetGrid(data=alldata, hue='DistanceToN', aspect=1.61)
+    fg.map(plt.scatter, 'SpinDensity', 'AverageBondLength').add_legend()
     plt.show()
     
     #alldata.plot(kind = 'scatter', x='SpinDensity', y = 'ChElPGCharge', color = 'blue')

@@ -14,7 +14,7 @@ def openFiles(input_directory):
     catalyst_dict = {}
     for file in os.listdir(input_directory):
         if file.endswith(".mol"):
-            fullfilepath = input_directory + "\\" + file
+            fullfilepath = os.path.join(input_directory, file)
             #print(file)
             catalyst_dict[file] = getNeighbors(fullfilepath)
             #print(catalyst_dict[file])
@@ -62,6 +62,21 @@ def convertToElem(num):
 def getNeighbors(file):
     neighbors_dict = {}
     m = Chem.MolFromMolFile(file, removeHs=False)
+    if m != None:
+        # print(file)
+        # print(m)
+        for atom in m.GetAtoms():
+            index = atom.GetIdx()
+            neighbors = atom.GetNeighbors()
+            appendlist = []
+            for atom in neighbors:
+                appendlist.append(atom.GetIdx())
+            neighbors_dict[index] = appendlist
+        return (neighbors_dict)
+        
+def getNeighborsWithoutH(file):
+    neighbors_dict = {}
+    m = Chem.MolFromMolFile(file)
     if m != None:
         # print(file)
         # print(m)
@@ -147,7 +162,7 @@ if __name__ == "__main__":
     input_directory = sys.argv[1]
     for file in os.listdir(input_directory):
         if file.endswith(".mol"):
-            fullfilepath = input_directory + "\\" + file
+            fullfilepath = os.path.join(input_directory, file)
             m = Chem.MolFromMolFile(fullfilepath, removeHs = False)
             if m != None:
                 print(file)
