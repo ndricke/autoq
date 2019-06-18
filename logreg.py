@@ -19,6 +19,7 @@ from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 from sklearn.utils.multiclass import unique_labels
 
@@ -132,10 +133,33 @@ def classify(cat, O2, plusone, mol, xyz, which, f1, f2, f3, f4, f5, f6, f7, f8, 
     print("The number of nonbinding active sites is ", falses)
     
     cols = []
+    scaledCols = []
+    oneHotCols = []
     features = [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10]
     for feature in features:
         if feature != None:
-            cols.append(feature)
+            if feature == "NumberOfHydrogens":
+                oneHotCols.append(feature)
+                cols.append(feature)
+            else:
+                scaledCols.append(feature)
+                cols.append(feature)
+    
+    print(scaledCols)
+    print(oneHotCols)
+    
+    scaler = StandardScaler()
+    oneHotEncoder = OneHotEncoder(categories = "auto", sparse = "False")
+    
+    scaled_columns = scaler.fit_transform(alldata[scaledCols])
+    print(scaled_columns)
+    print(len(scaled_columns))
+
+    encoded_columns = oneHotEncoder.fit_transform(alldata[oneHotCols])
+    print(encoded_columns)
+    print(encoded_columns[:, None])
+    processed_data = np.concatenate((scaled_columns, encoded_columns[:,None]), axis = 1)
+    print(processed_data)
     
     print("For the features ", cols)
     if poly != 0 :
@@ -153,7 +177,7 @@ def classify(cat, O2, plusone, mol, xyz, which, f1, f2, f3, f4, f5, f6, f7, f8, 
         y = alldata['Doesitbind'].astype('int')
         y = y.values
     else:
-        X=alldata[cols]
+        X=processed_data
         X = X.values
         y=alldata['Doesitbind'].astype('int')
         y = y.values
