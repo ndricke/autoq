@@ -135,11 +135,15 @@ def classify(cat, O2, plusone, mol, xyz, which, f1, f2, f3, f4, f5, f6, f7, f8, 
     cols = []
     scaledCols = []
     oneHotCols = []
+    alreadyProcessedCols = []
     features = [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10]
     for feature in features:
         if feature != None:
             if feature == "NumberOfHydrogens":
                 oneHotCols.append(feature)
+                cols.append(feature)
+            elif feature in ["OrthoOrPara", "Meta", "FartherThanPara", "IsInRingSize6", "IsInRingSize5"]:
+                alreadyProcessedCols.append(feature)
                 cols.append(feature)
             else:
                 scaledCols.append(feature)
@@ -147,18 +151,20 @@ def classify(cat, O2, plusone, mol, xyz, which, f1, f2, f3, f4, f5, f6, f7, f8, 
     
     print(scaledCols)
     print(oneHotCols)
+    print(alreadyProcessedCols)
     
     scaler = StandardScaler()
-    oneHotEncoder = OneHotEncoder(categories = "auto", sparse = "False")
+    oneHotEncoder = OneHotEncoder(categories = "auto", sparse = False)
     
     scaled_columns = scaler.fit_transform(alldata[scaledCols])
-    print(scaled_columns)
-    print(len(scaled_columns))
-
+    #print(scaled_columns)
+    print(scaled_columns.shape)
     encoded_columns = oneHotEncoder.fit_transform(alldata[oneHotCols])
-    print(encoded_columns)
-    print(encoded_columns[:, None])
-    processed_data = np.concatenate((scaled_columns, encoded_columns[:,None]), axis = 1)
+    #print(encoded_columns)
+    print(encoded_columns.shape)
+    already_processed_columns = alldata[alreadyProcessedCols]
+    already_processed_columns = already_processed_columns.values
+    processed_data = np.concatenate((scaled_columns, encoded_columns, already_processed_columns), axis = 1)
     print(processed_data)
     
     print("For the features ", cols)
@@ -178,7 +184,6 @@ def classify(cat, O2, plusone, mol, xyz, which, f1, f2, f3, f4, f5, f6, f7, f8, 
         y = y.values
     else:
         X=processed_data
-        X = X.values
         y=alldata['Doesitbind'].astype('int')
         y = y.values
 
@@ -203,8 +208,13 @@ def classify(cat, O2, plusone, mol, xyz, which, f1, f2, f3, f4, f5, f6, f7, f8, 
     
     svc = SVC(C = float(c), kernel = 'rbf', gamma = 'scale')
     svc.fit(X_train, y_train)
-    y_pred = svc.predict(X_test)
     print('Accuracy of SVC on test set: {:.2f}'.format(svc.score(X_test, y_test)))
+    
+    
+    y_pred = logregression.predict(X_test)
+
+    
+    
     misclassified = np.where(y_test != y_pred)
     #(misclassified)
     #(len(y_pred))
