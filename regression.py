@@ -63,18 +63,23 @@ def linearRegression(cat, O2, plusone, mol, xyz, f1, f2, f3, f4, f5, f6, f7, f8,
     if len(cols)==1:
         plt.scatter(X, y,  color='black')
         plt.plot(X_test, y_pred_lin, color='blue', linewidth=3)
-        plt.plot(X_test, y_pred_svr, color = 'red', linewidth = 3)
+        #plt.plot(X_test, y_pred_svr, color = 'red', linewidth = 3)
 
-        plt.xticks(())
-        plt.yticks(())
+        #plt.xticks(())
+        #plt.yticks(())
+        plt.xlabel(cols[0])
+        plt.ylabel("Binding Energy")
 
         plt.show()
     else:
-        plt.scatter(y_pred_lin, y_test, color='blue')
-        plt.scatter(y_pred_svr, y_test, color = 'red')
+        plt.scatter(y_test, y_pred_lin, color='blue')
+        #plt.scatter(y_pred_svr, y_test, color = 'red')
 
-        plt.xticks(())
-        plt.yticks(())
+        #plt.xticks(())
+        #plt.yticks(())
+        
+        plt.xlabel("Binding energy (actual) (eV)")
+        plt.ylabel("Binding energy (predicted) (eV)")
 
         plt.show()
 

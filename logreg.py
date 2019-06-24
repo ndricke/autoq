@@ -29,11 +29,11 @@ def plot_coefficients(classifier, feature_names, top_features=5):
     top_negative_coefficients = np.argsort(coef)[:top_features]
     top_coefficients = np.hstack([top_negative_coefficients, top_positive_coefficients])
     # create plot
-    plt.figure(figsize=(15, 5))
+    plt.figure(figsize=(15, 8))
     colors = ['red' if c < 0 else 'blue' for c in coef[top_coefficients]]
-    plt.bar(np.arange(1, (len(feature_names)*2)+1), coef[top_coefficients], color=colors)
+    plt.bar(np.arange(1, (len(feature_names)+1)), coef[top_coefficients], color=colors)
     feature_names = np.array(feature_names)
-    plt.xticks(np.arange(1, 1 + 2 * top_features), feature_names[top_coefficients], rotation=60, ha='right')
+    plt.xticks(np.arange(1, 1 + 2*top_features), feature_names[top_coefficients], rotation=20, ha='right', fontsize = 10)
     plt.show()
 
 def plot_confusion_matrix(y_true, y_pred,
@@ -91,7 +91,7 @@ def plot_confusion_matrix(y_true, y_pred,
 def plotData(X, y, dtc, f1, f2):
     x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
     y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
-    h = .02  # step size in the mesh
+    h = .01  # step size in the mesh
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
     Z = dtc.predict(np.c_[xx.ravel(), yy.ravel()])
 
@@ -101,7 +101,7 @@ def plotData(X, y, dtc, f1, f2):
     plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
 
    # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', cmap=plt.cm.Paired)
+    plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', cmap=plt.cm.Paired, s = 80)
     plt.xlabel(f1)
     plt.ylabel(f2)
 
