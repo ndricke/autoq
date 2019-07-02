@@ -6,8 +6,8 @@ import os
 import rdkit
 from rdkit import Chem
 from rdkit.Chem import AllChem
-
-
+from rdkit.Chem import rdFMCS
+import collections
 
 
 def openFiles(input_directory):    
@@ -158,17 +158,37 @@ def getShortestPathToN(atom, file):
     #print(return_list)
     return return_list
 
+def getMaxSubstructure(moldir):
+    smartsList = []
+    for file1 in os.listdir(moldir):
+        for file2 in os.listdir(moldir):
+            if file1 != file2:
+                print(file1)
+                print(file2)
+                fullfilepath1 = os.path.join(moldir, file1)
+                fullfilepath2 = os.path.join(moldir, file2)
+                mol_1 = Chem.MolFromMolFile(fullfilepath1)
+                mol_2 = Chem.MolFromMolFile(fullfilepath2)
+                mols = [mol_1, mol_2]
+                res = rdFMCS.FindMCS(mols)
+                smarts = res.smartsString
+                smartsList.append(smarts)
+    counter = collections.Counter(smartsList)
+    print(counter.most_common(10))
+                
+
 if __name__ == "__main__":
-    input_directory = sys.argv[1]
-    for file in os.listdir(input_directory):
-        if file.endswith(".mol"):
-            fullfilepath = os.path.join(input_directory, file)
-            m = Chem.MolFromMolFile(fullfilepath, removeHs = False)
-            if m != None:
-                print(file)
-                for atom in m.GetAtoms():
-                    #getShortestPathToN(atom)
-                    print("Index ", atom.GetIdx())
-                    hasHydrogen(atom)
+    getMaxSubstructure(sys.argv[1])
+    # input_directory = sys.argv[1]
+    # for file in os.listdir(input_directory):
+        # if file.endswith(".mol"):
+            # fullfilepath = os.path.join(input_directory, file)
+            # m = Chem.MolFromMolFile(fullfilepath, removeHs = False)
+            # if m != None:
+                # print(file)
+                # for atom in m.GetAtoms():
+                    # #getShortestPathToN(atom)
+                    # print("Index ", atom.GetIdx())
+                    # hasHydrogen(atom)
     #catalyst_dict = openFiles(input_directory)
     #print(catalyst_dict)

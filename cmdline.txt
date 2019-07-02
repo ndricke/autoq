@@ -1,0 +1,7 @@
+Command line arguments:
+
+To access original 30 catalysts
+python Documents\GitHub\autoq\logreg.py -cat D:\Kunal\Documents\MIT\np_catalysts\catalystoutfiles-Pbe0 -O2 D:\Kunal\Documents\MIT\np_catalysts\catO2_matched_cleaned.csv -plusone D:\Kunal\Documents\MIT\np_catalysts\catalystonly-plusone -mol D:\Kunal\Documents\MIT\np_catalysts\catalystonly-molfiles -xyz D:\Kunal\Documents\MIT\np_catalysts\catalystonly-xyzfiles -f2 ChargeDifference -f3 DistanceToN
+
+To access new catalysts, with previously made csv
+C:\Users\Kunal\Documents\GitHub\autoq\logreg.py -csv D:\Kunal\Documents\MIT\allfiles\DidItBind.csv -f2 ChargeDifference -f3 OrthoOrPara -f4 Meta -f5 FartherThanPara

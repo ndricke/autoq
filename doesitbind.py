@@ -149,6 +149,7 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
                     dataframe = catalyst_dictionary[catalyst]
                     if xyz_directory != None:
                         xyz_df = getBondLengths.makeXYZ(catalyst, xyz_directory)
+                        print(shortened_catalyst_name)
                         dataframe = getBondLengths.appendBondLengths(dataframe, dict, xyz_df)
                         
                     # print (dataframe.index)
@@ -182,7 +183,9 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
                         index1 = return_list[0]
                         #print("At index ", index1)
                         distance = return_list[1]
-                        if (distance == 1 | distance == 3):
+                        if (distance == 1):
+                            dataframe.at[(index1+1), 'OrthoOrPara'] = 1
+                        elif (distance == 3):
                             dataframe.at[(index1+1), 'OrthoOrPara'] = 1
                         elif distance == 2:
                             dataframe.at[(index1+1), 'Meta'] = 1
@@ -214,6 +217,7 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
                     
     for index, row in O2_bound_data.iterrows():#add data from O2 binding
         catalyst_name = row['Catalyst_File_Name']
+        print(catalyst_name)
         if ("\\" in catalyst_name):
             catalyst_name = catalyst_name.split("\\")[-1]
         #print(catalyst_name)

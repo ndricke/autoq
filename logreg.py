@@ -113,11 +113,16 @@ def plotData(X, y, dtc, f1, f2):
     plt.show()
 
 
-
+def getData(cat, O2, plusone, mol, xyz):
+    returndata = doesitbind.collectData(cat, O2, plusone, mol, xyz)
+    return(returndata)
     
-def classify(cat, O2, plusone, mol, xyz, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, c, poly, onehot, confusion, plotcoef, checkmissed):
+def getDataFromCSV(csv):
+    df = pd.read_csv(csv)
+    return (df)
     
-    alldata = doesitbind.collectData(cat, O2, plusone, mol, xyz)
+def classify(alldata, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, c, poly, onehot, confusion, plotcoef, checkmissed):
+    
     #print(alldata.loc[(alldata["SpinDensity"]>0.27)  & (alldata["Doesitbind"]==False)])
     #print(alldata)
     testcolumn = alldata['Doesitbind']
@@ -259,8 +264,9 @@ def classify(cat, O2, plusone, mol, xyz, which, f1, f2, f3, f4, f5, f6, f7, f8, 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser("Grab data about bare catalysts and store in csv")
-    parser.add_argument('-cat', help='input file/directory (bare catalyst .out)', type=str)
-    parser.add_argument('-O2', help='O2 bound directory', type=str)
+    parser.add_argument('-csv', help = 'doesitbind output csv', type=str, default = None)
+    parser.add_argument('-cat', help='input file/directory (bare catalyst .out)', type=str, default = None)
+    parser.add_argument('-O2', help='O2 bound directory', type=str, default = None)
     parser.add_argument('-plusone', help='Plus one data for bare catalyst to grab charge difference data', default = None, type=str)
     parser.add_argument('-mol', help='Mol files for bare catalyst to grab neighbor data', default = None, type=str)
     parser.add_argument('-xyz', help='xyz files for bare catalyst to grab bond length data', default = None, type=str)
@@ -284,12 +290,10 @@ if __name__ == "__main__":
     parser.add_argument('-misclassified', help = "Enable misclassification analysis", default = 0)
 
     args = parser.parse_args()
-
-    catalyst_only_directory = args.cat
-    O2_bound_directory = args.O2
-    plusone_directory = args.plusone
-    molfiles_directory = args.mol
-    xyz_directory = args.xyz
-    whichplot = args.plot
     
-    classify(catalyst_only_directory, O2_bound_directory, plusone_directory, molfiles_directory, xyz_directory, whichplot, args.f1, args.f2, args.f3, args.f4, args.f5, args.f6, args.f7, args.f8, args.f9, args.f10, args.c, args.poly, args.onehot, args.confusion, args.plotcoef, args.misclassified)
+    if (args.csv != None):
+        alldata = getDataFromCSV(args.csv)
+    else:
+        alldata = getData(args.cat, args.O2, args.plusone, args.mol, args.xyz)
+    
+    classify(alldata, args.plot, args.f1, args.f2, args.f3, args.f4, args.f5, args.f6, args.f7, args.f8, args.f9, args.f10, args.c, args.poly, args.onehot, args.confusion, args.plotcoef, args.misclassified)
