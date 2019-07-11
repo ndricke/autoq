@@ -120,34 +120,19 @@ def getData(cat, O2, plusone, mol, xyz):
 def getDataFromCSV(csv):
     df = pd.read_csv(csv)
     return (df)
-    
-def classify(alldata, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, c, poly, onehot, confusion, plotcoef, checkmissed):
-    
-    #print(alldata.loc[(alldata["SpinDensity"]>0.27)  & (alldata["Doesitbind"]==False)])
-    #print(alldata)
-    testcolumn = alldata['Doesitbind']
-    trues = 0
-    falses =0
-    for value in testcolumn:
-        if value == True:
-            trues +=1
-        else:
-            falses +=1
-    
-    print("The number of binding active sites is ", trues)
-    print("The number of nonbinding active sites is ", falses)
-    
+
+def processData(alldata, features):
     cols = []
     scaledCols = []
     oneHotCols = []
     alreadyProcessedCols = []
-    features = [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10]
     for feature in features:
         if feature != None:
             if feature == "NumberOfHydrogens":
                 oneHotCols.append(feature)
                 cols.append(feature)
-            elif feature in ["OrthoOrPara", "Meta", "FartherThanPara", "IsInRingSize6", "IsInRingSize5"]:
+            elif feature in ["OrthoOrPara", "Meta", "FartherThanPara", "IsInRingSize6", "IsInRingSize5", "SpinDensity",
+            "Substructure1", "Substructure2", "Substructure3", "Substructure4", "Substructure5", "Substructure6", "Substructure7", "Substructure8", "Substructure9", "Substructure10"]:
                 alreadyProcessedCols.append(feature)
                 cols.append(feature)
             else:
@@ -169,28 +154,57 @@ def classify(alldata, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, c, poly, o
     print(encoded_columns.shape)
     already_processed_columns = alldata[alreadyProcessedCols]
     already_processed_columns = already_processed_columns.values
-    processed_data = np.concatenate((scaled_columns, encoded_columns, already_processed_columns), axis = 1)
+    processed_data = np.concatenate((already_processed_columns, scaled_columns, encoded_columns), axis = 1)
     print(processed_data)
+    return(processed_data)
+    
+def classify(alldata, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, c, poly, onehot, confusion, plotcoef, checkmissed, testdata):
+    
+    #print(alldata.loc[(alldata["SpinDensity"]>0.27)  & (alldata["Doesitbind"]==False)])
+    #print(alldata)
+    testcolumn = alldata['Doesitbind']
+    trues = 0
+    falses = 0
+    for value in testcolumn:
+        if value == True:
+            trues +=1
+        else:
+            falses +=1
+    
+    print("The number of binding active sites is ", trues)
+    print("The number of nonbinding active sites is ", falses)
+    
+    cols = []
+    scaledCols = []
+    oneHotCols = []
+    alreadyProcessedCols = []
+    features = [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10]
+    processed_data = processData(alldata, features)
+    if testdata != None:
+        processed_test_data = processData(testdata, features)
+    for feature in features:
+        if feature != None:
+            cols.append(feature)    
     
     print("For the features ", cols)
-    if poly != 0 :
-        print("With polynomial basis set")
-        poly = PolynomialFeatures()
-        X = alldata[cols]
-        X = poly.fit_transform(X)
-        y = alldata['Doesitbind'].astype('int')
-        y = y.values
-    if onehot!=0 :
-        print("With one-hot encoding")
-        onehot = OneHotEncoder()
-        X = alldata[cols]
-        X = onehot.fit_transform(X)
-        y = alldata['Doesitbind'].astype('int')
-        y = y.values
-    else:
-        X=processed_data
-        y=alldata['Doesitbind'].astype('int')
-        y = y.values
+    # if poly != 0 :
+        # print("With polynomial basis set")
+        # poly = PolynomialFeatures()
+        # X = alldata[cols]
+        # X = poly.fit_transform(X)
+        # y = alldata['Doesitbind'].astype('int')
+        # y = y.values
+    # if onehot!=0 :
+        # print("With one-hot encoding")
+        # onehot = OneHotEncoder()
+        # X = alldata[cols]
+        # X = onehot.fit_transform(X)
+        # y = alldata['Doesitbind'].astype('int')
+        # y = y.values
+    # else:
+    X=processed_data
+    y=alldata['Doesitbind'].astype('int')
+    y = y.values
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
     logregression = LogisticRegression(solver = 'lbfgs')
@@ -203,7 +217,7 @@ def classify(alldata, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, c, poly, o
     dtc.fit(X_train, y_train)
     print('Accuracy of decision tree classifier on test set: {:.2f}'.format(dtc.score(X_test, y_test)))
     
-    mlp = MLPClassifier(max_iter=2500, hidden_layer_sizes = (512,10))
+    mlp = MLPClassifier(max_iter=2500, hidden_layer_sizes = (2048,15))
     mlp.fit(X_train, y_train)
     print('Accuracy of MLP classifier on test set: {:.2f}'.format(mlp.score(X_test, y_test)))
     
@@ -217,27 +231,50 @@ def classify(alldata, which, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, c, poly, o
     
     
     y_pred = logregression.predict(X_test)
+    print(y_pred)
 
-    
+    print(X_train)
+    if testdata != None:
+        test_pred = linsvc.predict(processed_test_data)
+        #for i in range(len(test_pred)):
+        success = []
+        successes = np.where(test_pred == 1)
+        for index in successes:
+            for value in index:
+                test_spin_density = (processed_test_data[value][0])
+                for index, row in testdata.iterrows():
+                    if row['SpinDensity'] == test_spin_density:
+                        success.append((index, row['Catalyst Name'], row['DistanceToN'], row['SpinDensity']))
+        for tuple in success:
+            index = tuple[0]
+            name = tuple[1]
+            distance = tuple[2]
+            spin = tuple[3]
+            print(name, " at index ", index, "\nDistance to N is ", distance, "\nSpin density is", spin, "\n")
     
     misclassified = np.where(y_test != y_pred)
+    #print(misclassified)
+    #print(X_test)
     #(misclassified)
     #(len(y_pred))
     missed = []
-    for index in misclassified:
-        for value in index:
-            test_spin_density = (X_test[value][0])
-            for index, row in alldata.iterrows():
-                if row['SpinDensity'] == test_spin_density:
-                    missed.append((index, row['Catalyst Name'], row['Doesitbind'], row['DistanceToN'], row['SpinDensity']))
-    
-    for tuple in missed:
-        index = tuple[0]
-        name = tuple[1]
-        bind = tuple[2]
-        distance = tuple[3]
-        spin = tuple[4]
-        if checkmissed != 0:
+    if checkmissed!= 0:
+        for index in misclassified:
+            #print(index)
+            for value in index:
+                #print(value)
+                test_spin_density = (X_test[value][0])
+                print(test_spin_density)
+                #print(test_spin_density)
+                for index, row in alldata.iterrows():
+                    if row['SpinDensity'] == test_spin_density:
+                        missed.append((index, row['Catalyst Name'], row['Doesitbind'], row['DistanceToN'], row['SpinDensity']))
+        for tuple in missed:
+            index = tuple[0]
+            name = tuple[1]
+            bind = tuple[2]
+            distance = tuple[3]
+            spin = tuple[4]
             print(name, " at index ", index, "\nDoes it bind? ", bind, "\nDistance to N is ", distance, "\nSpin density is", spin, "\n")
     #print(svc.dual_coef_)
     #print(svc.get_params())
@@ -288,6 +325,8 @@ if __name__ == "__main__":
     parser.add_argument('-confusion', help = "Enable confusion matrix", default = 0)
     parser.add_argument('-plotcoef', help = "Enable coefficient plot", default = 0)
     parser.add_argument('-misclassified', help = "Enable misclassification analysis", default = 0)
+    
+    parser.add_argument('-test', help = 'csv for unclassified data', default = None)
 
     args = parser.parse_args()
     
@@ -296,4 +335,4 @@ if __name__ == "__main__":
     else:
         alldata = getData(args.cat, args.O2, args.plusone, args.mol, args.xyz)
     
-    classify(alldata, args.plot, args.f1, args.f2, args.f3, args.f4, args.f5, args.f6, args.f7, args.f8, args.f9, args.f10, args.c, args.poly, args.onehot, args.confusion, args.plotcoef, args.misclassified)
+    classify(alldata, args.plot, args.f1, args.f2, args.f3, args.f4, args.f5, args.f6, args.f7, args.f8, args.f9, args.f10, args.c, args.poly, args.onehot, args.confusion, args.plotcoef, args.misclassified, args.test)

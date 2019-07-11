@@ -24,14 +24,14 @@ def getDataFromCSV(csv):
     df = pd.read_csv(csv)
     return (df)
 
-def linearRegression(alldata, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10):
+def linearRegression(alldata, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20):
 
     print(alldata.size)
     alldata = alldata[(alldata["Doesitbind"] == True) & (alldata["BindingEnergy"]>-1.5)]
     print(alldata.size)
         
     cols = []
-    features = [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10]
+    features = [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20]
     for feature in features:
         if feature != None:
             cols.append(feature)
@@ -86,6 +86,9 @@ def linearRegression(alldata, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10):
         
         plt.xlabel("Binding energy (actual) (eV)")
         plt.ylabel("Binding energy (predicted) (eV)")
+        
+        plt.xlim(-1,0)
+        plt.ylim(-1,0)
 
         plt.show()
 
@@ -108,8 +111,17 @@ if __name__ == "__main__":
     parser.add_argument('-f8', help = 'Eighth feature', default = None)
     parser.add_argument('-f9', help = 'Ninth feature', default = None)
     parser.add_argument('-f10', help = 'Tenth feature', default = None)
-
-
+    parser.add_argument('-f11', help = 'Tenth feature', default = None)
+    parser.add_argument('-f12', help = 'Tenth feature', default = None)
+    parser.add_argument('-f13', help = 'Tenth feature', default = None)
+    parser.add_argument('-f14', help = 'Tenth feature', default = None)
+    parser.add_argument('-f15', help = 'Tenth feature', default = None)
+    parser.add_argument('-f16', help = 'Tenth feature', default = None)
+    parser.add_argument('-f17', help = 'Tenth feature', default = None)
+    parser.add_argument('-f18', help = 'Tenth feature', default = None)
+    parser.add_argument('-f19', help = 'Tenth feature', default = None)
+    parser.add_argument('-f20', help = 'Tenth feature', default = None)
+    
     args = parser.parse_args()
 
     if (args.csv != None):
@@ -117,4 +129,4 @@ if __name__ == "__main__":
     else:
         alldata = getData(args.cat, args.O2, args.plusone, args.mol, args.xyz)
         
-    linearRegression(alldata, args.f1, args.f2, args.f3, args.f4, args.f5, args.f6, args.f7, args.f8, args.f9, args.f10)
+    linearRegression(alldata, args.f1, args.f2, args.f3, args.f4, args.f5, args.f6, args.f7, args.f8, args.f9, args.f10, args.f11, args.f12, args.f13, args.f14, args.f15, args.f16, args.f17, args.f18, args.f19, args.f20)

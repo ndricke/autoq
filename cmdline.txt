@@ -4,4 +4,12 @@ To access original 30 catalysts
 python Documents\GitHub\autoq\logreg.py -cat D:\Kunal\Documents\MIT\np_catalysts\catalystoutfiles-Pbe0 -O2 D:\Kunal\Documents\MIT\np_catalysts\catO2_matched_cleaned.csv -plusone D:\Kunal\Documents\MIT\np_catalysts\catalystonly-plusone -mol D:\Kunal\Documents\MIT\np_catalysts\catalystonly-molfiles -xyz D:\Kunal\Documents\MIT\np_catalysts\catalystonly-xyzfiles -f2 ChargeDifference -f3 DistanceToN
 
 To access new catalysts, with previously made csv
-C:\Users\Kunal\Documents\GitHub\autoq\logreg.py -csv D:\Kunal\Documents\MIT\allfiles\DidItBind.csv -f2 ChargeDifference -f3 OrthoOrPara -f4 Meta -f5 FartherThanPara
+python C:\Users\Kunal\Documents\GitHub\autoq\logreg.py -csv D:\Kunal\Documents\MIT\allfiles\DidItBind.csv -f2 ChargeDifference -f3 OrthoOrPara -f4 Meta -f5 FartherThanPara
+python C:\Users\Kunal\Documents\GitHub\autoq\logreg.py -csv D:\Kunal\Documents\MIT\allfiles\DidItBind.csv -f2 ChargeDifference -f3 OrthoOrPara -f4 Meta -f5 FartherThanPara -f6 NumberOfHydrogens
+C:\Users\Kunal\Documents\GitHub\autoq\logreg.py -csv D:\Kunal\Documents\MIT\allfiles\DidItBindWithSubstructure.csv -f2 ChargeDifference -f3 OrthoOrPara -f4 Meta -f5 FartherThanPara -f6 NumberOfHydrogens
+
+New catalyst, regression:
+python C:\Users\Kunal\Documents\GitHub\autoq\regression.py -csv D:\Kunal\Documents\MIT\allfiles\DidItBindWithSubstructure.csv -f2 ChargeDifference -f3 OrthoOrPara -f4 Meta -f5 FartherThanPara -f6 NumberOfHydrogens -f7 IonizationEnergy -f8 NumberOfHydrogens -f9 AromaticSize -f10 IsInRingSize6
+
+Load new catalyst database:
+python C:\Users\Kunal\Documents\GitHub\autoq\doesitbind.py -cat D:\Kunal\Documents\MIT\allfiles\catalystonly_out -O2 D:\Kunal\Documents\MIT\allfiles\catO2_matched.csv -plusone D:\Kunal\Documents\MIT\allfiles\catalystonly-plusone -mol D:\Kunal\Documents\MIT\allfiles\catalystonly-molfiles -xyz D:\Kunal\Documents\MIT\allfiles\catalystonly-xyzfiles

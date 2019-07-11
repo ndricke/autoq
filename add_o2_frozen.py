@@ -43,7 +43,7 @@ def find_active_sites(file_name, molecule, bind_all):
         for i, atom in enumerate(molecule_copy.getAtoms()):
             if atom.symbol() == 'C' and len(molecule_copy.getBondedAtomsSmart(i, oct = False)) == 3:
                 Csp2_list.append(i)
-        print Csp2_list
+        print (Csp2_list)
         return Csp2_list
     if "mepyr" in file_name:
         is_metal_catalyst = False
@@ -224,7 +224,10 @@ def run(infile, add_O2, add_O2_reactant, O2r_dist, add_OOH_O_OH, add_CO_CN, bind
                 bind_XY(infile, mol3D_O2, site, "O", "O", 1.55, 111, 1.3, True, "O2")
             if add_O2_reactant:
                 bind_XY(infile, mol3D_O2, site, "O", "O", O2r_dist, 120, 1.21, False, "-O2-%2.3f" %O2r_dist)
-
+            if add_OOH_O_OH:
+                bind_OOH(infile, mol3D_O2, site, 1.445, 107.3, 1.462, 0.978)
+                bind_O(infile, mol3D_O2, site, 1.364)
+                bind_XY(infile, mol3D_O2, site, "O", "H", 1.433, 107.0, 0.975, False, "OH")
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', help='input file/directory (bare catalyst .mol or .xyz)', type=str)

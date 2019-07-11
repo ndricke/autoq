@@ -49,7 +49,6 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
     
 
     catalyst_only_data = getMullikan.makeDataFrame(catalyst_only_directory)#generate catalyst only data (Mulliken spin density, ChElPG charge)
-    O2_bound_data = pd.read_csv(O2_bound_directory)#grab O2 bound data (does it bind?)
         
     unique_catalysts = catalyst_only_data.Catalyst.unique()#generate list of catalysts
     
@@ -214,42 +213,47 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
                         totalAromatic = return_list_4[1]
                         dataframe.at[(index4+1), 'AromaticSize'] = totalAromatic
                         #print (dataframe['DistanceToN'])
-                    
-    for index, row in O2_bound_data.iterrows():#add data from O2 binding
-        catalyst_name = row['Catalyst_File_Name']
-        print(catalyst_name)
-        if ("\\" in catalyst_name):
-            catalyst_name = catalyst_name.split("\\")[-1]
-        #print(catalyst_name)
-        #print(unique_catalysts)
-        index = row['Active_Site']
-        full_file = row['CatalystO2_File_Name']
-        intended_site = re.search("-(.*)_optsp", full_file)
-        intended_site = intended_site.group(1)
-        intended_site = int(intended_site)
-        intended_site += 1
-        int_index = int(index)
-        if intended_site != int_index:
-            continue
-        if catalyst_name in unique_catalysts:
-            dataframe = catalyst_dictionary[catalyst_name]
-            #print(row['BindingEnergy'])
-            binding_energy = float(row['BindingEnergy'])
-            bond_length = row['Cat-O2_Bond_Length']
-            dataframe.at[index, 'BindingEnergy'] = binding_energy
-            dataframe.at[index, 'BondLength'] = bond_length
-            dataframe.at[index, 'CatalystO2File'] = full_file
-            doesitbind = False
-            if (bond_length<2 and binding_energy<-0.1):
-                doesitbind = True
-            if dataframe.at[index, 'Doesitbind']!=True:
-                dataframe.at[index, 'Doesitbind'] = doesitbind
+    
+    if O2_bound_directory != None:
+        O2_bound_data = pd.read_csv(O2_bound_directory)#grab O2 bound data (does it bind?)
+
+        for index, row in O2_bound_data.iterrows():#add data from O2 binding
+            catalyst_name = row['Catalyst_File_Name']
+            print(catalyst_name)
+            if ("\\" in catalyst_name):
+                catalyst_name = catalyst_name.split("\\")[-1]
+            #print(catalyst_name)
+            #print(unique_catalysts)
+            index = row['Active_Site']
+            full_file = row['CatalystO2_File_Name']
+            intended_site = re.search("-(.*)_optsp", full_file)
+            intended_site = intended_site.group(1)
+            intended_site = int(intended_site)
+            intended_site += 1
+            int_index = int(index)
+            if intended_site != int_index:
+                continue
+            if catalyst_name in unique_catalysts:
+                dataframe = catalyst_dictionary[catalyst_name]
+                #print(row['BindingEnergy'])
+                binding_energy = float(row['BindingEnergy'])
+                bond_length = row['Cat-O2_Bond_Length']
+                dataframe.at[index, 'BindingEnergy'] = binding_energy
+                dataframe.at[index, 'BondLength'] = bond_length
+                dataframe.at[index, 'CatalystO2File'] = full_file
+                doesitbind = False
+                if (bond_length<2 and binding_energy<-0.1):
+                    doesitbind = True
+                if dataframe.at[index, 'Doesitbind']!=True:
+                    dataframe.at[index, 'Doesitbind'] = doesitbind
 
     print("O2 binding data loaded!")            
     alldata = pd.DataFrame()
     for catalyst in unique_catalysts:
         dataframe = catalyst_dictionary[catalyst]
-        newdataframe = dataframe[(dataframe["Doesitbind"]!='Unknown') & (dataframe["Element"]=='C')]
+        newdataframe = dataframe[(dataframe["Element"]=='C')]
+        if O2_bound_directory != None:
+            newdataframe = newdataframe[(newdataframe["Doesitbind"]!='Unknown')]
         alldata=alldata.append(newdataframe)
         catalyst_dictionary[catalyst] = newdataframe
     
@@ -272,7 +276,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser("Grab data about bare catalysts and store in csv")
     parser.add_argument('-cat', help='input file/directory (bare catalyst .out)', type=str)
-    parser.add_argument('-O2', help='O2 bound directory', type=str)
+    parser.add_argument('-O2', help='O2 bound directory', default = None, type=str)
     parser.add_argument('-plusone', help='Plus one data for bare catalyst to grab charge difference data', default = None, type=str)
     parser.add_argument('-mol', help='Mol files for bare catalyst to grab neighbor data', default = None, type=str)
     parser.add_argument('-xyz', help='Xyz files for bare catalyst to grab bond length data', default = None, type=str)
