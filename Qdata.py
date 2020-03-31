@@ -1,4 +1,3 @@
-#!/usr/bin/env python2.7
 import ChemData as CD
 import sys
 import numpy as np
@@ -29,10 +28,14 @@ orbital_key = "Orbital Energies (a.u.)"
 #Parsing class for Q-Chem output files
 class Qdata(object):
   def __init__(self):
+    self.finish_count = 0
     self.chelpg_flag = False
+    self.geo_converged = False
     self.energy_list = []
     self.E = None
-    #There was a point where I didn't include all of these, but hey, why not? It runs fast enough
+    self.Esolv = None
+    self.charge = None
+    self.mult = None
     self.parse_base = {finish_key:self.isComplete, \
                        chmul_key:self.chargeMult, \
                        sp_key:self.spEnergy, \
@@ -51,8 +54,8 @@ class Qdata(object):
                        #orbital_key : self.orbitals, \ #Currently breaks parsing for all things after the orbitals
                        }
 
-#main workhorse; iterate through file and grab stuff when it hits a key phrase
   def qParse(self, qchem_outfile):
+  #main workhorse; iterate through file and grab stuff when it hits a key phrase
     with open(qchem_outfile, 'r') as f:
       for line in f:
         #if match with parse list, call function
@@ -96,11 +99,15 @@ class Qdata(object):
 
   def isComplete(self, infile = None,line=None):
     self.finish = True
+    self.finish_count += 1
 
   def chargeMult(self,infile,line):
     chmul = next(infile).strip('\n').split()
-    self.charge = int(chmul[0])
-    self.mult = int(chmul[1])
+    try:
+        self.charge = int(chmul[0])
+        self.mult = int(chmul[1])
+    except:
+        pass
     #del self.parse_base[chmul_key]
     self.trash_key_bin.append(chmul_key)
 
@@ -138,7 +145,7 @@ class Qdata(object):
 
   def solvEnergy(self,infile,line):
     spline = line.split()
-    self.E = float(spline[-2])
+    self.Esolv = float(spline[-2])
 
   def entropy(self, infile, line):
     spline = line.split()
@@ -195,6 +202,7 @@ class Qdata(object):
     grab_list.pop(-1)
 
     self.opt_atoms, self.opt_coord = self.coordArr(grab_list)
+    self.geo_converged = True
 
 
   def coordArr(self,coord_list):
@@ -244,5 +252,6 @@ if __name__ == "__main__":
 #  print(qdata.opt_coord)
 #  qdata.writeXYZ('test.xyz', qdata.opt_atoms, qdata.opt_coord)
 
-  print(qdata.energy_list)
-  print(qdata.chelpg)
+  #print(qdata.energy_list)
+  #print(qdata.chelpg)
+  print(qdata.finish_count)
