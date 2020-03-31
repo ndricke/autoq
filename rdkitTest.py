@@ -6,9 +6,51 @@ import os
 import rdkit
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.Chem import rdFMCS
+import collections
 
+def getSubstructureMatch(mostCommon, molecule):
+    df = pd.read_csv(mostCommon)
+    list = df['SMARTS']
+    #print(list)
+    mol = Chem.MolFromMolFile(molecule)
+    if(mol == None): return None
+    subMatch = []
+    for item in list:
+        substructure = Chem.MolFromSmarts(item)
+        #print(substructure)
+        if mol.HasSubstructMatch(substructure):
+            subMatch.append(1)
+        else:
+            subMatch.append(0)
+    print(subMatch)
+    return(subMatch)
 
-
+def addSubstructureToCSV(csv, mostCommon, molFilesDir, numSubstructures, outdir):
+    df = pd.read_csv(csv)
+    numSubstructures = int(numSubstructures)
+    i = 1
+    while i<=numSubstructures:
+        string = 'Substructure'+str(i)
+        df[string] = 0
+        i+=1
+    for file in os.listdir(molFilesDir):
+        full_file_path = os.path.join(molFilesDir, file)
+        list = getSubstructureMatch(mostCommon, full_file_path)
+        if list != None:
+            for index, row in df.iterrows():
+                if df.at[index, 'Catalyst Name'] in file:
+                    i = 1
+                    while i<=numSubstructures:
+                        string = 'Substructure' + str(i)
+                        df.at[index, string] = list[i-1]
+                        print("Got 1!")
+                        i += 1
+    print(df)
+    final_path = os.path.join(outdir, 'DidItBindWithSubstructure.csv')
+    df.to_csv(final_path)
+    return(df)
+        
 
 def openFiles(input_directory):    
     catalyst_dict = {}
@@ -158,17 +200,55 @@ def getShortestPathToN(atom, file):
     #print(return_list)
     return return_list
 
+def getMaxSubstructure(moldir):
+    smartsList = []
+    for file1 in os.listdir(moldir):
+        for file2 in os.listdir(moldir):
+            if file1 != file2:
+                print(file1)
+                print(file2)
+                fullfilepath1 = os.path.join(moldir, file1)
+                fullfilepath2 = os.path.join(moldir, file2)
+                mol_1 = Chem.MolFromMolFile(fullfilepath1)
+                mol_2 = Chem.MolFromMolFile(fullfilepath2)
+                mols = [mol_1, mol_2]
+                if ((mol_1 != None) & (mol_2 != None)):
+                    res = rdFMCS.FindMCS(mols)
+                    smarts = res.smartsString
+                    smartsList.append(smarts)
+    counter = collections.Counter(smartsList)
+    list = counter.most_common(50)
+    print(counter.most_common(50))
+    df = pd.DataFrame(list)
+    print(df)
+    df.to_csv("D:\Kunal\Documents\MIT\\fingerprinting\mostCommon.csv")
+    return df           
+
 if __name__ == "__main__":
-    input_directory = sys.argv[1]
-    for file in os.listdir(input_directory):
-        if file.endswith(".mol"):
-            fullfilepath = os.path.join(input_directory, file)
-            m = Chem.MolFromMolFile(fullfilepath, removeHs = False)
-            if m != None:
-                print(file)
-                for atom in m.GetAtoms():
-                    #getShortestPathToN(atom)
-                    print("Index ", atom.GetIdx())
-                    hasHydrogen(atom)
+    import argparse
+    parser = argparse.ArgumentParser("Add substructure to csv")
+    parser.add_argument('-csv', help='Existing csv of data from doesitbind.py', type=str)
+    parser.add_argument('-mostCommon', help='csv of most common substructures in dataset', type=str)
+    parser.add_argument('-mol', help='Mol files for bare catalyst to grab substructure match', default = None, type=str)
+    parser.add_argument('-num', help='How many substructures to add to csv', default = None, type=str)
+    parser.add_argument('-out', help='Out directory', default = None, type=str)
+
+
+    args = parser.parse_args()
+
+
+    addSubstructureToCSV(args.csv, args.mostCommon, args.mol, args.num, args.out)
+ 
+    # input_directory = sys.argv[1]
+    # for file in os.listdir(input_directory):
+        # if file.endswith(".mol"):
+            # fullfilepath = os.path.join(input_directory, file)
+            # m = Chem.MolFromMolFile(fullfilepath, removeHs = False)
+            # if m != None:
+                # print(file)
+                # for atom in m.GetAtoms():
+                    # #getShortestPathToN(atom)
+                    # print("Index ", atom.GetIdx())
+                    # hasHydrogen(atom)
     #catalyst_dict = openFiles(input_directory)
     #print(catalyst_dict)

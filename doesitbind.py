@@ -49,7 +49,6 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
     
 
     catalyst_only_data = getMullikan.makeDataFrame(catalyst_only_directory)#generate catalyst only data (Mulliken spin density, ChElPG charge)
-    O2_bound_data = pd.read_csv(O2_bound_directory)#grab O2 bound data (does it bind?)
         
     unique_catalysts = catalyst_only_data.Catalyst.unique()#generate list of catalysts
     
@@ -57,7 +56,9 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
 
     
     for catalyst in unique_catalysts:#generate dictionary of catalyst dataframes
-        catalyst_dictionary[catalyst] = pd.DataFrame(columns=["Catalyst Name", "CatalystO2File", "Atom Number", "Element", "SpinDensity", "ChElPGNeutralCharge", "Doesitbind", "BondLength", "BindingEnergy", "NeutralFreeEnergy","DistanceToN", "AverageBondLength", "BondLengthRange", "NumberOfHydrogens", "AromaticSize", "IsInRingSize6", "IsInRingSize5", "NeighborSpinDensity", "NeighborChElPGCharge", "NeighborChargeDifference"])
+        catalyst_dictionary[catalyst] = pd.DataFrame(columns=["Catalyst Name", "CatalystO2File", "Atom Number", "Element", "SpinDensity", "ChElPGNeutralCharge", 
+        "Doesitbind", "BondLength", "BindingEnergy", "NeutralFreeEnergy","OrthoOrPara", "Meta", "FartherThanPara", "DistanceToN", 
+        "AverageBondLength", "BondLengthRange", "NumberOfHydrogens", "AromaticSize", "IsInRingSize6", "IsInRingSize5", "NeighborSpinDensity", "NeighborChElPGCharge", "NeighborChargeDifference"])
 
 
     print("Individual catalyst dataframes created!")
@@ -72,10 +73,13 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
         appendlist.append(row['Atoms'])
         appendlist.append(row['Mulliken Spin'])
         appendlist.append(row['ChElPG Charge'])
-        appendlist.append("Unknown")
+        appendlist.append(False)
         appendlist.append(0)
         appendlist.append(0)
         appendlist.append(row['Total Free Energy'])
+        appendlist.append(0)
+        appendlist.append(0)
+        appendlist.append(0)        
         appendlist.append(0)
         appendlist.append(0)
         appendlist.append(0)
@@ -144,6 +148,7 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
                     dataframe = catalyst_dictionary[catalyst]
                     if xyz_directory != None:
                         xyz_df = getBondLengths.makeXYZ(catalyst, xyz_directory)
+                        print(shortened_catalyst_name)
                         dataframe = getBondLengths.appendBondLengths(dataframe, dict, xyz_df)
                         
                     # print (dataframe.index)
@@ -177,6 +182,14 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
                         index1 = return_list[0]
                         #print("At index ", index1)
                         distance = return_list[1]
+                        if (distance == 1):
+                            dataframe.at[(index1+1), 'OrthoOrPara'] = 1
+                        elif (distance == 3):
+                            dataframe.at[(index1+1), 'OrthoOrPara'] = 1
+                        elif distance == 2:
+                            dataframe.at[(index1+1), 'Meta'] = 1
+                        else:
+                            dataframe.at[(index1+1), 'FartherThanPara'] = 1
                         #print("Distance is ", distance)
                         dataframe.at[(index1+1), 'DistanceToN'] = distance
                         
@@ -200,32 +213,47 @@ def collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, 
                         totalAromatic = return_list_4[1]
                         dataframe.at[(index4+1), 'AromaticSize'] = totalAromatic
                         #print (dataframe['DistanceToN'])
-                    
-    for index, row in O2_bound_data.iterrows():#add data from O2 binding
-        catalyst_name = row['Catalyst_File_Name']
-        #print(catalyst_name)
-        #print(unique_catalysts)
-        index = row['Active_Site']
-        if catalyst_name in unique_catalysts:
-            dataframe = catalyst_dictionary[catalyst_name]
-            #print(row['BindingEnergy'])
-            binding_energy = float(row['BindingEnergy'])
-            bond_length = row['Cat-O2_Bond_Length']
-            dataframe.at[index, 'BindingEnergy'] = binding_energy
-            dataframe.at[index, 'BondLength'] = bond_length
+    
+    if O2_bound_directory != None:
+        O2_bound_data = pd.read_csv(O2_bound_directory)#grab O2 bound data (does it bind?)
+
+        for index, row in O2_bound_data.iterrows():#add data from O2 binding
+            catalyst_name = row['Catalyst_File_Name']
+            print(catalyst_name)
+            if ("\\" in catalyst_name):
+                catalyst_name = catalyst_name.split("\\")[-1]
+            #print(catalyst_name)
+            #print(unique_catalysts)
+            index = row['Active_Site']
             full_file = row['CatalystO2_File_Name']
-            dataframe.at[index, 'CatalystO2File'] = full_file
-            doesitbind = False
-            if (bond_length<2 and binding_energy<0):
-                doesitbind = True
-            if dataframe.at[index, 'Doesitbind']!=True:
-                dataframe.at[index, 'Doesitbind'] = doesitbind
+            intended_site = re.search("-(.*)_optsp", full_file)
+            intended_site = intended_site.group(1)
+            intended_site = int(intended_site)
+            intended_site += 1
+            int_index = int(index)
+            if intended_site != int_index:
+                continue
+            if catalyst_name in unique_catalysts:
+                dataframe = catalyst_dictionary[catalyst_name]
+                #print(row['BindingEnergy'])
+                binding_energy = float(row['BindingEnergy'])
+                bond_length = row['Cat-O2_Bond_Length']
+                dataframe.at[index, 'BindingEnergy'] = binding_energy
+                dataframe.at[index, 'BondLength'] = bond_length
+                dataframe.at[index, 'CatalystO2File'] = full_file
+                doesitbind = False
+                if (bond_length<2 and binding_energy<-0.1):
+                    doesitbind = True
+                if dataframe.at[index, 'Doesitbind']!=True:
+                    dataframe.at[index, 'Doesitbind'] = doesitbind
 
     print("O2 binding data loaded!")            
     alldata = pd.DataFrame()
     for catalyst in unique_catalysts:
         dataframe = catalyst_dictionary[catalyst]
-        newdataframe = dataframe[(dataframe["Doesitbind"]!='Unknown') & (dataframe["Element"]=='C')]
+        newdataframe = dataframe[(dataframe["Element"]=='C')]
+        if O2_bound_directory != None:
+            newdataframe = newdataframe[(newdataframe["Doesitbind"]!='Unknown')]
         alldata=alldata.append(newdataframe)
         catalyst_dictionary[catalyst] = newdataframe
     
@@ -248,7 +276,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser("Grab data about bare catalysts and store in csv")
     parser.add_argument('-cat', help='input file/directory (bare catalyst .out)', type=str)
-    parser.add_argument('-O2', help='O2 bound directory', type=str)
+    parser.add_argument('-O2', help='O2 bound directory', default = None, type=str)
     parser.add_argument('-plusone', help='Plus one data for bare catalyst to grab charge difference data', default = None, type=str)
     parser.add_argument('-mol', help='Mol files for bare catalyst to grab neighbor data', default = None, type=str)
     parser.add_argument('-xyz', help='Xyz files for bare catalyst to grab bond length data', default = None, type=str)
@@ -264,8 +292,8 @@ if __name__ == "__main__":
     alldata = collectData(catalyst_only_directory, O2_bound_directory, plusone_directory, molfiles_directory, xyz_directory)
     alldata.to_csv('DidItBind.csv')
     
-    fg = seaborn.FacetGrid(data=alldata, hue='DistanceToN', aspect=1.61)
-    fg.map(plt.scatter, 'SpinDensity', 'AverageBondLength').add_legend()
+    fg = seaborn.FacetGrid(data=alldata, hue='Doesitbind', aspect=1.61)
+    fg.map(plt.scatter, 'SpinDensity', 'ChElPGNeutralCharge').add_legend()
     plt.show()
     
     #alldata.plot(kind = 'scatter', x='SpinDensity', y = 'ChElPGCharge', color = 'blue')

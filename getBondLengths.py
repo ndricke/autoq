@@ -55,6 +55,7 @@ def appendBondLengths(dataframe, neighbor_dict, xyz_df):#takes in dataframe to b
         max_distance = 0
         min_distance = 100
         average_distance = 0
+        print(neighbor_dict)
         listOfNeighbors = neighbor_dict[index-1]
         num_neighbors = 0
         numC = (len(xyz_df.index))

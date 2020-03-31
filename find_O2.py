@@ -65,9 +65,11 @@ def create_df(in_pickle, save_df = True):
         filenames.append(qdata.filename)
         O2_found, multiple_O2 = False, False
         try:
+            print("*****", qdata.filename)
             energy_list.append(qdata.E)
             #unopt_energy_list.append(qdata.energy_list[-7])
         except:
+            print("*****", qdata.filename, "None")
             energy_list.append(None)
         try:
             chelpgs = [float(item) for item in qdata.chelpg]
@@ -76,41 +78,46 @@ def create_df(in_pickle, save_df = True):
             for i in atom_coords:
                 chelpgs.append(None)
 
-        """
-        #reorder atom_coords and chelpg's so all the H's are at the end
-        H_list = []
-        new_coords, new_chelpgs = [], []
-        for i, coord in enumerate(atom_coords):
-            if coord.split()[0] == 'H':
-                H_list.append(i)
-            else:
-                new_coords.append(coord)
-                new_chelpgs.append(chelpgs[i])
-        for index in H_list:
-            new_coords.append(atom_coords[index])
-            new_chelpgs.append(chelpgs[index])
-        #overwrite with newly ordered coordinates
-        atom_coords = new_coords
-        chelpgs = new_chelpgs
-        """
-
         O_coords = []
         for coord in atom_coords:
             if coord.split(' ')[0] == 'O':
                 O_coords.append(coord)
-        if len(O_coords) >= 2:
-            for index1 in range(len(O_coords) - 1):
-                for index2 in range(index1 + 1, len(O_coords)):
-                    if distance(O_coords[index1], O_coords[index2]) < 1.6:
-                        if O2_found == True:
-                            multiple_O2 = True
-                            break
-                            # doesn't exit index1 for loop but still reduces unnecessary operations
-                        else:
-                            O2_found = True
-                            oxy1, oxy2 = index1, index2 # O_coords index values for oxygens identified as O2
-        if not O2_found or multiple_O2 or len(O_coords) < 2:
+        if len(O_coords) < 2:
+            #print("Fewer than two oxygens in " + qdata.filename)
+            oxy1_list.append(None)
+            oxy2_list.append(None)
+            oxy1_chelpgs.append(None)
+            oxy2_chelpgs.append(None)
+            total_oxy_chelpgs.append(None)
+            cat_O2_bond_lengths.append(None)
+            cat_list.append(None)
+            cat_elements.append(None)
+            cat_chelpgs.append(None)
+            continue
+        for index1 in range(len(O_coords) - 1):
+            for index2 in range(index1 + 1, len(O_coords)):
+                if distance(O_coords[index1], O_coords[index2]) < 1.6:
+                    if O2_found == True:
+                        multiple_O2 = True
+                        break
+                        # doesn't exit index1 for loop but still reduces unnecessary operations
+                    else:
+                        O2_found = True
+                        oxy1, oxy2 = index1, index2 # O_coords index values for oxygens identified as O2
+        if not O2_found:
             #print("No O2 detected in " + qdata.filename)
+            oxy1_list.append(None)
+            oxy2_list.append(None)
+            oxy1_chelpgs.append(None)
+            oxy2_chelpgs.append(None)
+            total_oxy_chelpgs.append(None)
+            cat_O2_bond_lengths.append(None)
+            cat_list.append(None)
+            cat_elements.append(None)
+            cat_chelpgs.append(None)
+            continue
+        if multiple_O2:
+            #print("Multiple O2 detected in " + qdata.filename)
             oxy1_list.append(None)
             oxy2_list.append(None)
             oxy1_chelpgs.append(None)
@@ -171,8 +178,8 @@ def create_df(in_pickle, save_df = True):
         cat_elements.append(atom_coords[catalyst_index].split(' ')[0])
         cat_chelpgs.append(chelpgs[catalyst_index])
 
-    print(len(filenames), len(energy_list), len(cat_list), len(cat_elements), len(oxy1_list), len(oxy2_list))
-    print(len(cat_chelpgs), len(oxy1_chelpgs), len(oxy2_chelpgs), len(unopt_energy_list), len(cat_O2_bond_lengths))
+
+    print("******", len(filenames), len(energy_list), len(cat_list), len(cat_elements), len(oxy1_list), len(oxy2_list), len(cat_chelpgs), len(oxy1_chelpgs), len(oxy2_chelpgs), len(cat_O2_bond_lengths), "******")
     O2_dict = {'CatalystO2_File_Name': filenames, 'CatalystO2_Energy': energy_list, 'Active_Site': cat_list,
                                      'Active_Site_ID': cat_elements, 'Oxygen_1': oxy1_list, 'Oxygen_2': oxy2_list,
                                      'CatalystO2_Active_Site_CHELPG': cat_chelpgs, 'Oxygen_1_CHELPG': oxy1_chelpgs,

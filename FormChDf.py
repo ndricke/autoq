@@ -162,9 +162,13 @@ if __name__ == "__main__":
         cation_qdata_list = dill.load(open(args.cation + ".p", "rb"))
         O2_df = dill.load(open(args.O2 + "_df.p", "rb"))
     else:
-        cat_qdata_list = GenLoadCat(args.bare, save=args.save)
-        cation_qdata_list = GenLoadCat(args.cation, save=args.save)
-        O2_df = GenLoadCatO2(args.O2, save=args.save)
+        cat_qdata_list, cation_qdata_list, O2_df = None, None, None
+        if not args.bare == None:
+            cat_qdata_list = GenLoadCat(args.bare, save=args.save)
+        if not args.cation == None:
+            cation_qdata_list = GenLoadCat(args.cation, save=args.save)
+        if not args.O2 == None:
+            O2_df = GenLoadCatO2(args.O2, save=args.save)
 
     print(cat_qdata_list[0].chelpg)
     match = MatchO2(O2_df, cat_qdata_list, cation_qdata_list)
