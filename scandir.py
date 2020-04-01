@@ -5,8 +5,6 @@ import pandas as pd
 import ChemData as CD
 import Qdata as QD
 
-indir = sys.argv[1]
-outfile = sys.argv[2]
 
 def generate_done(qdatas):
     done_list = []
@@ -48,6 +46,9 @@ def generate_qdata_df(qdatas):
 
 
 if __name__ == "__main__":
+    indir = sys.argv[1]
+    outfile = sys.argv[2]
+
     data = {}
     for filename in os.listdir(indir):
         qcout = indir+'/'+filename

@@ -31,7 +31,7 @@ def map_catalysts(species):
     Take a filename, and separate out the bound species
     """
     s_spec = pd.Series(species)
-    catalysts = ("C4Fe", "N2C2Fe", "N2rC2Fe", "nanFe", "nanFe-functionalized", "porphyrinFe-functionalized")
+    catalysts = ("C4Fe", "N2C2Fe", "N2rC2Fe", "nanFe", "nanFe-functionalized", "porphyrinFe-functionalized", "tetrid", "tetry", "mepyr")
     bound = ("O2", "O2r",  "O2br", "O2H", "OH", "CN", "CO", "O")
     s_spec["Catalyst"] = "None"
     s_spec["Bound"] = "None"
@@ -42,6 +42,10 @@ def map_catalysts(species):
                 catalyst += str(number_match.group(1))
             s_spec["Catalyst"] = catalyst
             trunc_species = species.replace(catalyst, '').replace("X2", '').replace("X", '')
+            trunc_split = trunc_species.split('-')
+            if len(trunc_split) > 1:
+                s_spec["Bound_Site"] = int(trunc_split[-1])
+                trunc_species = trunc_split[0]
             for react in bound:
                 if react == trunc_species:
                     s_spec["Bound"] = react
@@ -106,6 +110,7 @@ def parse_autoq_catalysts(df):
     df_spec_split = parse_bound_by_name(df)
     df_aug = df.merge(df_spec_split, left_on="Species", right_on=0)
     df_aug_min = find_min_bound(df_aug, column_groups=["Charge", "Size", "Catalyst", "Bound"])
+    return df_aug_min
 
 if __name__ == "__main__":
 
@@ -113,9 +118,10 @@ if __name__ == "__main__":
 
     infile = sys.argv[1]
     outfile = sys.argv[2]
+
+
     read_func = read_funcs[infile.split('.')[-1]]
     df = read_func(infile)
-
     #parse_HER_catalysts(df)
     parse_autoq_catalysts(df)
 
