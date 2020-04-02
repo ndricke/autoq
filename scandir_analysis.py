@@ -37,13 +37,18 @@ def map_catalysts(species):
     s_spec["Bound"] = "None"
     for catalyst in catalysts:
         if catalyst in species:
-            number_match = re.search(catalyst+"(\d+)", species)
+            if "func" in species:
+                number_match = re.search("func(\d+)", species)
+            else:
+                number_match = re.search(catalyst+"(\d+)", species)
             if number_match:
-                catalyst += str(number_match.group(1))
+                catalyst += number_match.group(1)
+                s_spec["funcnum"] = int(number_match.group(1))
+                # TODO: Get bound species right after number match (or infer from directory?)
             s_spec["Catalyst"] = catalyst
             trunc_species = species.replace(catalyst, '').replace("X2", '').replace("X", '')
             trunc_split = trunc_species.split('-')
-            if len(trunc_split) > 1:
+            if len(trunc_split) > 2:
                 s_spec["Bound_Site"] = int(trunc_split[-1])
                 trunc_species = trunc_split[0]
             for react in bound:
@@ -109,7 +114,7 @@ def parse_autoq_catalysts(df):
     df = df[~df["Species"].str.contains("_fq_")]
     df_spec_split = parse_bound_by_name(df)
     df_aug = df.merge(df_spec_split, left_on="Species", right_on=0)
-    df_aug_min = find_min_bound(df_aug, column_groups=["Charge", "Size", "Catalyst", "Bound"])
+    df_aug_min = find_min_bound(df_aug, column_groups=["Charge", "Catalyst", "Bound"])
     return df_aug_min
 
 if __name__ == "__main__":
