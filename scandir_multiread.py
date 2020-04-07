@@ -21,6 +21,10 @@ need to be able to link all the various intermediates together, which means I ca
 I could just rename everything with a script on it's own, which also operates on the functionalization mappings. This is also going to be necessary for the macrocycles.
 
 
+Current issues:
+only a small number of entries make it into the output file (catdata_all.json)
+the funcnum is frequently missing, along with the bound site
+
 
 """
 
@@ -63,6 +67,7 @@ if __name__ == "__main__":
         df_list.append(df_aug_min)
     df_all = pd.concat(df_list)
     df_all.reset_index(inplace=True)
+    print(df_all)
     df_all.to_json(args.outfile)
 
 

@@ -26,6 +26,38 @@ def map_size(species):
         return "Reg"
 
 
+def map_autoq_catalysts(filename):
+    """
+    Take a filename, and separate out the bound species
+    """
+    s_spec = pd.Series(filename)
+    catalysts = ("C4Fe", "N2C2Fe", "N2rC2Fe", "nanFe", "nanFe-functionalized", "porphyrinFe-functionalized", "tetrid", "tetry", "mepyr")
+    bound = ("O2", "O2r",  "O2br", "O2H", "OH", "CN", "CO", "O")
+    s_spec["Catalyst"] = None
+    s_spec["Bound"] = None
+
+    # need to fix problem that species does not always contain the func## (accidentally stored in jobtype by some schemes)
+    # it maybe be good to just rename those jobs to better follow some aspects of the naming scheme
+    # but we have the examples of:
+    # tetrid_func9_optsp_a0m2.out --> tetrid
+    # tetridOH_func1_optsp_a0m1.out --> tetridOH
+    # mepyr-func36O2H_optsp-14_optsp_a0m1.out --> mepyr-func36O2H
+    # it might be better just to build something that can fall back on filename with re under certain conditions?
+    for catalyst in catalysts:
+        if catalyst in filename:
+            #print("found %s in %s" % (catalyst, filename))
+            s_spec["Catalyst"] = catalyst
+            trunc_species = filename.replace(catalyst, '').replace("X2", '').replace("X", '')
+
+            number_match = re.search("func(\d+)([^-|_]*)-?(\d+)?", filename)
+            if number_match:
+                catalyst += number_match.group(1)
+                s_spec["Funcnum"] = int(number_match.group(1))
+                s_spec["Bound"] = number_match.group(2)
+                s_spec["Bound_site"] = number_match.group(3)
+    return s_spec
+
+
 def map_catalysts(species):
     """
     Take a filename, and separate out the bound species
@@ -33,27 +65,23 @@ def map_catalysts(species):
     s_spec = pd.Series(species)
     catalysts = ("C4Fe", "N2C2Fe", "N2rC2Fe", "nanFe", "nanFe-functionalized", "porphyrinFe-functionalized", "tetrid", "tetry", "mepyr")
     bound = ("O2", "O2r",  "O2br", "O2H", "OH", "CN", "CO", "O")
-    s_spec["Catalyst"] = "None"
-    s_spec["Bound"] = "None"
+    s_spec["Catalyst"] = None
+    s_spec["Bound"] = None
+
     for catalyst in catalysts:
         if catalyst in species:
-            if "func" in species:
-                number_match = re.search("func(\d+)", species)
-            else:
-                number_match = re.search(catalyst+"(\d+)", species)
-            if number_match:
-                catalyst += number_match.group(1)
-                s_spec["funcnum"] = int(number_match.group(1))
-                # TODO: Get bound species right after number match (or infer from directory?)
             s_spec["Catalyst"] = catalyst
             trunc_species = species.replace(catalyst, '').replace("X2", '').replace("X", '')
-            trunc_split = trunc_species.split('-')
-            if len(trunc_split) > 2:
-                s_spec["Bound_Site"] = int(trunc_split[-1])
-                trunc_species = trunc_split[0]
+                    
+            number_match = re.search(catalyst+"(\d+)", species)
+            if number_match:
+                catalyst += number_match.group(1)
+                s_spec["Funcnum"] = int(number_match.group(1))
+
             for react in bound:
                 if react == trunc_species:
                     s_spec["Bound"] = react
+
     return s_spec
 
 
@@ -112,10 +140,12 @@ def parse_HER_catalysts(df):
 
 def parse_autoq_catalysts(df):
     df = df[~df["Species"].str.contains("_fq_")]
-    df_spec_split = parse_bound_by_name(df)
-    df_aug = df.merge(df_spec_split, left_on="Species", right_on=0)
-    df_aug_min = find_min_bound(df_aug, column_groups=["Charge", "Catalyst", "Bound"])
-    return df_aug_min
+    df_spec_split = df["Filename"].apply(map_autoq_catalysts)
+    #print(type(df_spec_split))
+    #print(df_spec_split)
+    df_aug = df.merge(df_spec_split, left_on="Filename", right_on=0)
+    #df_aug_min = find_min_bound(df_aug, column_groups=["Charge", "Catalyst", "Bound"]) # there is no min bound for autoq
+    return df_aug
 
 if __name__ == "__main__":
 
