@@ -47,14 +47,20 @@ def map_autoq_catalysts(filename):
         if catalyst in filename:
             #print("found %s in %s" % (catalyst, filename))
             s_spec["Catalyst"] = catalyst
-            trunc_species = filename.replace(catalyst, '').replace("X2", '').replace("X", '')
 
             number_match = re.search("func(\d+)([^-|_]*)-?(\d+)?", filename)
             if number_match:
-                catalyst += number_match.group(1)
                 s_spec["Funcnum"] = int(number_match.group(1))
                 s_spec["Bound"] = number_match.group(2)
                 s_spec["Bound_site"] = number_match.group(3)
+
+            if s_spec["Bound"] == None or s_spec["Bound"] == '': # this will happen in the case of tetridOH_func5_optsp_a0m1.out
+                trunc_species = filename.split('_')[0].replace(catalyst, '').replace("X2", '').replace("X", '')
+                if trunc_species in bound:
+                    s_spec["Bound"] = trunc_species
+                else:
+                    print(trunc_species, catalyst)
+                
     return s_spec
 
 
@@ -104,6 +110,21 @@ def find_min_bound(df, column_groups):
     df_min_idx = df.groupby(column_groups, sort=False)["Esolv"].idxmin()
     df_min = df.loc[df_min_idx]
     return df_min
+
+
+def calc_binding_energy_autoq(df):
+    """Calculate binding energy from bare to bound for each bound species"""
+    # Split by bare and bound catalysts
+    df["data_dir"] = df # TODO strip Bound off of data_dir
+    df_bare = df[df["Bound"] == ""]
+    df_bound = df[df["Bound"] != ""]
+
+
+    df_bound_bare = df_bound.merge(df_bare[["Catalyst", "Funcnum", "data_dir", "Esolv"]], how="outer", 
+                    on=["Catalyst", "Funcnum", "data_dir"], suffixes=("", "_bare"))
+
+    df_bound_bare["E_binding"] = df_bound_bare["Esolv"] - df_bound_bare["Esolv_bare"]
+    return df_bound_bare
 
 
 def calc_binding_energies(df, df_bound_species):
