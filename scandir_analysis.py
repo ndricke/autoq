@@ -36,19 +36,12 @@ def map_autoq_catalysts(filename):
     s_spec["Catalyst"] = None
     s_spec["Bound"] = None
 
-    # need to fix problem that species does not always contain the func## (accidentally stored in jobtype by some schemes)
-    # it maybe be good to just rename those jobs to better follow some aspects of the naming scheme
-    # but we have the examples of:
-    # tetrid_func9_optsp_a0m2.out --> tetrid
-    # tetridOH_func1_optsp_a0m1.out --> tetridOH
-    # mepyr-func36O2H_optsp-14_optsp_a0m1.out --> mepyr-func36O2H
-    # it might be better just to build something that can fall back on filename with re under certain conditions?
     for catalyst in catalysts:
         if catalyst in filename:
             #print("found %s in %s" % (catalyst, filename))
             s_spec["Catalyst"] = catalyst
 
-            number_match = re.search("func(\d+)([^-|_]*)-?(\d+)?", filename)
+            number_match = re.search("func(\d+)([^-|_]*)-?(\d+)?", filename)  # parse filename
             if number_match:
                 s_spec["Funcnum"] = int(number_match.group(1))
                 s_spec["Bound"] = number_match.group(2)
@@ -60,7 +53,6 @@ def map_autoq_catalysts(filename):
                     s_spec["Bound"] = trunc_species
                 else:
                     print(trunc_species, catalyst)
-                
     return s_spec
 
 
@@ -112,21 +104,6 @@ def find_min_bound(df, column_groups):
     return df_min
 
 
-def calc_binding_energy_autoq(df):
-    """Calculate binding energy from bare to bound for each bound species"""
-    # Split by bare and bound catalysts
-    df["data_dir"] = df # TODO strip Bound off of data_dir
-    df_bare = df[df["Bound"] == ""]
-    df_bound = df[df["Bound"] != ""]
-
-
-    df_bound_bare = df_bound.merge(df_bare[["Catalyst", "Funcnum", "data_dir", "Esolv"]], how="outer", 
-                    on=["Catalyst", "Funcnum", "data_dir"], suffixes=("", "_bare"))
-
-    df_bound_bare["E_binding"] = df_bound_bare["Esolv"] - df_bound_bare["Esolv_bare"]
-    return df_bound_bare
-
-
 def calc_binding_energies(df, df_bound_species):
     """Calculate binding energy from bare to bound for each bound species"""
     bound_charge_map = {"O2":0, "O2br":0, "O2r":0, "O2H":0, "O":0, "OH":-1, "CO":0, "CN":-1, "None":0}
@@ -159,14 +136,29 @@ def parse_HER_catalysts(df):
     df_fin.to_csv(outfile + "_bindingE.csv")
     df_aug.to_csv(outfile + "_annotated.csv")
 
+
+def calc_binding_energy_autoq(df_in):
+    """Calculate binding energy from bare to bound for each bound species"""
+    # Split by bare and bound catalysts
+    df = df_in.copy()
+    df_bare = df[df["Bound"] == ""]
+    df_bound = df[df["Bound"] != ""]
+    df_bound["data_dir"] = df_bound["data_dir"].str.rstrip("O").str.rstrip("O2H").str.rstrip("O2").str.rstrip("OH").str.strip("CO")
+    df_bound_bare = df_bound.merge(df_bare[["Catalyst", "Funcnum", "data_dir", "Esolv"]], how="left", on=["Catalyst", "Funcnum", "data_dir"], suffixes=("", "_bare"))
+
+    df_bound_bare["E_binding"] = df_bound_bare["Esolv"] - df_bound_bare["Esolv_bare"]
+    return df_bound_bare
+
+
 def parse_autoq_catalysts(df):
-    df = df[~df["Species"].str.contains("_fq_")]
-    df_spec_split = df["Filename"].apply(map_autoq_catalysts)
-    #print(type(df_spec_split))
-    #print(df_spec_split)
-    df_aug = df.merge(df_spec_split, left_on="Filename", right_on=0)
-    #df_aug_min = find_min_bound(df_aug, column_groups=["Charge", "Catalyst", "Bound"]) # there is no min bound for autoq
-    return df_aug
+    df_mod = df.copy()
+    df_aug = df["Filename"].apply(map_autoq_catalysts)
+    df_aug.rename(columns={0:"Filename"}, inplace=True)
+    print(df_aug)
+    df_merge = df_mod.merge(df_aug, on="Filename") 
+    df_binding = calc_binding_energy_autoq(df_merge)
+    df_binding.to_json("catdata_bindE.json")
+    return df_merge
 
 if __name__ == "__main__":
 
@@ -177,18 +169,15 @@ if __name__ == "__main__":
 
 
     read_func = read_funcs[infile.split('.')[-1]]
-    df = read_func(infile)
+    df_in = read_func(infile)
+
+    df_in.drop(columns=["Species", "JobType", "Catalyst", "Bound", "Funcnum", "Bound_site"], inplace=True)
     #parse_HER_catalysts(df)
-    parse_autoq_catalysts(df)
-
-
-
-
-
-
-
-
-
+    df_out = parse_autoq_catalysts(df_in)
+    print()
+    print(df_out)
+    print(df_out[df_out["Filename"].isnull()])
+    df_out.to_json(outfile)
 
 
 
