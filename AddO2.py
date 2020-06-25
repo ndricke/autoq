@@ -36,7 +36,7 @@ class AddO2(object):
                              'CO': self.bindCO}
 
     def standardActiveSites(self):
-        active_site_dict = {"mepyr": [14], "tetrid": [16], "tetry": [17,20]}
+        active_site_dict = {"mepyr": [14], "tetrid": [16], "tetry": [27]} # tetry[17,20]
         metal = self.molecule.findMetal()
         if len(metal) >= 1:
             self.catO_bond_length = 1.8

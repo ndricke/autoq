@@ -145,7 +145,6 @@ def calc_binding_energy_autoq(df_in):
     df_bound = df[df["Bound"] != ""]
     df_bound["data_dir"] = df_bound["data_dir"].str.rstrip("O").str.rstrip("O2H").str.rstrip("O2").str.rstrip("OH").str.strip("CO")
     df_bound_bare = df_bound.merge(df_bare[["Catalyst", "Funcnum", "data_dir", "Esolv"]], how="left", on=["Catalyst", "Funcnum", "data_dir"], suffixes=("", "_bare"))
-
     df_bound_bare["E_binding"] = df_bound_bare["Esolv"] - df_bound_bare["Esolv_bare"]
     return df_bound_bare
 
@@ -156,8 +155,8 @@ def parse_autoq_catalysts(df):
     df_aug.rename(columns={0:"Filename"}, inplace=True)
     print(df_aug)
     df_merge = df_mod.merge(df_aug, on="Filename") 
-    df_binding = calc_binding_energy_autoq(df_merge)
-    df_binding.to_json("catdata_bindE.json")
+    #df_binding = calc_binding_energy_autoq(df_merge)
+    #df_binding.to_json("catdata_bindE.json")
     return df_merge
 
 if __name__ == "__main__":

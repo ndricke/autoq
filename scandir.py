@@ -57,10 +57,6 @@ if __name__ == "__main__":
             qdata.readFile(qcout)
             data[filename] = qdata
 
-
-
     df = generate_qdata_df(data)
     df.to_json(outfile+".json")
-    df.to_csv(outfile+".csv")
-
-    
+    #df.to_csv(outfile+".csv")

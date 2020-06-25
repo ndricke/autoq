@@ -19,13 +19,6 @@ This script needs to read each file, and use the various base parts of names to 
 need to be able to link all the various intermediates together, which means I can't have name collisions)
 
 I could just rename everything with a script on it's own, which also operates on the functionalization mappings. This is also going to be necessary for the macrocycles.
-
-
-Current issues:
-only a small number of entries make it into the output file (catdata_all.json)
-the funcnum is frequently missing, along with the bound site
-
-
 """
 
 def load_funclist(fname):
@@ -44,7 +37,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--datadir", help="Input data directory containing scandir jsons", default="scandir_jsons")
     parser.add_argument("-f", "--funclist", help="Input directory containing functionalization lists", default="catfunc_list")
-    parser.add_argument("-o", "--outfile", help="Output file with concatenated data", default="catdata_all.json")
+    parser.add_argument("-o", "--outfile", help="Output file with concatenated data", default="catdata_all_bindE.json")
     args = parser.parse_args()
 
     print("Parsing functionalization map files")
@@ -62,12 +55,14 @@ if __name__ == "__main__":
         fpath = args.datadir + '/'+infile
         f_prefix = infile.split(".")[0]
         df = pd.read_json(fpath)
+        df["data_dir"] = f_prefix
         df_aug_min = scandir_analysis.parse_autoq_catalysts(df)
-        df_aug_min["data_dir"] = f_prefix
         df_list.append(df_aug_min)
     df_all = pd.concat(df_list)
     df_all.reset_index(inplace=True)
+    df_bindE = scandir_analysis.calc_binding_energy_autoq(df_all)
     print(df_all)
-    df_all.to_json(args.outfile)
+    print(df_bindE)
+    df_bindE.to_json(args.outfile)
 
 
