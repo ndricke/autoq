@@ -66,7 +66,7 @@ def create_df(in_pickle, save_df = True):
         O2_found, multiple_O2 = False, False
         try:
             print("*****", qdata.filename)
-            energy_list.append(qdata.E)
+            energy_list.append(qdata.Esolv)
             #unopt_energy_list.append(qdata.energy_list[-7])
         except:
             print("*****", qdata.filename, "None")

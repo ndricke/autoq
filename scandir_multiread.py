@@ -30,7 +30,7 @@ def load_funclist(fname):
             cat_list.append(spline[1])
             loc_list.append(make_tuple(spline[2]))
             func_list.append(make_tuple(spline[3]))
-    return pd.DataFrame({"funcnum":funcnum_list, "catalyst":cat_list, "loc":loc_list, "func":func_list})
+    return pd.DataFrame({"Funcnum":funcnum_list, "Catalyst":cat_list, "loc":loc_list, "func":func_list})
 
 
 if __name__ == "__main__":
@@ -41,13 +41,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("Parsing functionalization map files")
-    func_map = {}
+    df_func_list = []
     for funclist_filename in os.listdir(args.funclist):
         print(funclist_filename)
         funclist_filepath = args.funclist + '/' + funclist_filename
         funclist = funclist_filename.split('.')[0]
-        func_map[funclist] = load_funclist(funclist_filepath)
+        df_func = load_funclist(funclist_filepath)
+        df_func["data_dir"] = funclist
+        df_func_list.append(df_func)
     print()
+    df_funcs = pd.concat(df_func_list)
+    df_funcs = df_funcs.reset_index().drop(columns="index")
+    print(df_funcs)
 
     print("Reading and analyzing scandir jsons")
     df_list = []
@@ -59,9 +64,10 @@ if __name__ == "__main__":
         df_aug_min = scandir_analysis.parse_autoq_catalysts(df)
         df_list.append(df_aug_min)
     df_all = pd.concat(df_list)
-    df_all.reset_index(inplace=True)
+    df_all = df_all.reset_index().drop(columns="index")
     df_bindE = scandir_analysis.calc_binding_energy_autoq(df_all)
     print(df_all)
+    df_bindE = df_bindE.merge(df_funcs, on=["data_dir", "Catalyst", "Funcnum"], how="left")
     print(df_bindE)
     df_bindE.to_json(args.outfile)
 

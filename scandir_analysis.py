@@ -56,29 +56,30 @@ def map_autoq_catalysts(filename):
     return s_spec
 
 
-def map_catalysts(species):
+def map_catalysts(filename):
     """
     Take a filename, and separate out the bound species
     """
-    s_spec = pd.Series(species)
+    s_spec = pd.Series(filename)
     catalysts = ("C4Fe", "N2C2Fe", "N2rC2Fe", "nanFe", "nanFe-functionalized", "porphyrinFe-functionalized", "tetrid", "tetry", "mepyr")
     bound = ("O2", "O2r",  "O2br", "O2H", "OH", "CN", "CO", "O")
     s_spec["Catalyst"] = None
     s_spec["Bound"] = None
 
     for catalyst in catalysts:
-        if catalyst in species:
+        if catalyst in filename:
             s_spec["Catalyst"] = catalyst
-            trunc_species = species.replace(catalyst, '').replace("X2", '').replace("X", '')
+            trunc_species = filename.replace(catalyst, '').replace("X2", '').replace("X", '')
                     
-            number_match = re.search(catalyst+"(\d+)", species)
+            number_match = re.search(catalyst+"(\d+)([^-|_]*)", filename)
             if number_match:
                 catalyst += number_match.group(1)
                 s_spec["Funcnum"] = int(number_match.group(1))
+                s_spec["Bound"] = number_match.group(2)
 
-            for react in bound:
-                if react == trunc_species:
-                    s_spec["Bound"] = react
+            #for react in bound:
+            #    if react == trunc_species:
+            #        s_spec["Bound"] = react
 
     return s_spec
 
@@ -109,8 +110,8 @@ def calc_binding_energies(df, df_bound_species):
     bound_charge_map = {"O2":0, "O2br":0, "O2r":0, "O2H":0, "O":0, "OH":-1, "CO":0, "CN":-1, "None":0}
 
     # Split by bare and bound catalysts
-    df_bare = df[df["Bound"] == "None"]
-    df_bound = df[df["Bound"] != "None"]
+    df_bare = df[df["Bound"] == ""]
+    df_bound = df[df["Bound"] != ""]
 
     df_bare.rename(columns={"Charge":"Charge_Bare"}, inplace=True)
 
@@ -125,16 +126,31 @@ def calc_binding_energies(df, df_bound_species):
     return df_bound_bare
 
 
+def calc_binding_energies_HER(df, df_bound_species):
+    # Split by bare and bound catalysts
+    df_bare = df[df["Bound"] == ""]
+    df_bound = df[df["Bound"] != ""]
+    df_bound_bare = df_bound.merge(df_bare[[ "Catalyst", "Esolv", "Funcnum"]], how="outer",
+                    on=["Catalyst", "Funcnum"], suffixes=("", "_bare"))
+    df_bound_bare = df_bound_bare.merge(df_bound_species, how="left", on="Bound")
+    return df_bound_bare
+
 def parse_HER_catalysts(df):
     df["Size"] = parse_size_by_name(df)
     df_spec_split = parse_bound_by_name(df)
     df_aug = df.merge(df_spec_split, left_on="Species", right_on=0)
-    df_aug_min = find_min_bound(df_aug, column_groups=["Charge", "Size", "Catalyst", "Bound"])
+    df_aug_min = find_min_bound(df_aug, column_groups=["Charge", "Size", "Catalyst", "Bound", "Funcnum"])
+    print(df_aug)
+    print(df_aug.columns)
+    df_aug.to_json("df_aug.json")
+    print()
+    print(df_aug_min)
     df_fin = calc_binding_energies(df_aug_min, df_molecules)
-    df_fin["Binding_Energy"] = (df_fin["Esolv"] - df_fin["Esolv_bare"] - df_fin["Esolv_bound"])*27.211
-    df_fin = df_fin.dropna()
-    df_fin.to_csv(outfile + "_bindingE.csv")
-    df_aug.to_csv(outfile + "_annotated.csv")
+    #df_fin["Binding_Energy"] = (df_fin["Esolv"] - df_fin["Esolv_bare"] - df_fin["Esolv_bound"])*27.211
+    df_fin["E_binding"] = df_fin["Esolv"] - df_fin["Esolv_bare"]
+    print(df_fin)
+    #df_fin = df_fin.dropna()
+    return df_aug, df_aug_min, df_fin
 
 
 def calc_binding_energy_autoq(df_in):
@@ -170,9 +186,9 @@ if __name__ == "__main__":
     read_func = read_funcs[infile.split('.')[-1]]
     df_in = read_func(infile)
 
-    df_in.drop(columns=["Species", "JobType", "Catalyst", "Bound", "Funcnum", "Bound_site"], inplace=True)
-    #parse_HER_catalysts(df)
-    df_out = parse_autoq_catalysts(df_in)
+    #df_in.drop(columns=["Species", "JobType", "Catalyst", "Bound", "Funcnum", "Bound_site"], inplace=True)
+    df_out = parse_HER_catalysts(df_in)
+    #df_out = parse_autoq_catalysts(df_in)
     print()
     print(df_out)
     print(df_out[df_out["Filename"].isnull()])

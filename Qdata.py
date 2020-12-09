@@ -254,4 +254,5 @@ if __name__ == "__main__":
 
   #print(qdata.energy_list)
   #print(qdata.chelpg)
-  print(qdata.finish_count)
+  #print(qdata.finish_count)
+  print(qdata.E)
